@@ -841,7 +841,7 @@ function doClose(id){
 }
 
 function pgBoard(){
-  var openPass=ST.exchanges.filter(function(e){return e.type==='passover'&&e.status==='pending';});
+  var openPass=ST.exchanges.filter(function(e){return e.type==='passover'&&e.status==='open'&&(!e.toDocId||e.toDocId==='');});
   var h='<div class="page"><div class="ph"><h2>📢 Mural de Plantões</h2><p>Plantões disponíveis para troca ou repasse</p></div>';
   if(!isG())h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"><button class="btn bor sm" onclick="modalPass(null)">📤 Anunciar Repasse</button><button class="btn bp sm" onclick="modalExch(null)">🔄 Solicitar Troca</button></div>';
   if(!openPass.length){h+='<div class="card"><div class="cb" style="text-align:center;padding:32px 16px"><div style="font-size:40px;margin-bottom:12px">📋</div><p style="font-size:14px;font-weight:600;color:var(--tx)">Nenhum plantão disponível no momento</p><p style="font-size:12.5px;color:var(--tx2);margin-top:6px">Quando alguém anunciar um repasse, aparecerá aqui para todos.</p></div></div>';}
@@ -852,7 +852,7 @@ function pgBoard(){
       h+='<div class="pass-card"><h4>'+(fromDoc?avH(fromDoc,22)+' <span style="vertical-align:middle">'+fromDoc.name+'</span>':'—')+'</h4>';
       if(s)h+='<p style="font-size:13px;font-weight:600;color:var(--tx);margin-bottom:4px">'+sIco(s.type)+' '+fD(s.date)+' · '+sLbl(s.type)+'</p><small>'+sTime(s.type)+' · '+s.sector+'</small>';
       if(e.reason)h+='<p style="font-size:12px;color:var(--tx2);margin-top:6px;font-style:italic">Motivo: '+e.reason+'</p>';
-      if(!own&&!claimed&&!isG())h+='<div style="margin-top:10px"><button class="btn bt sm" onclick="claimPass(\''+e.id+'\')">✋ Quero assumir este plantão</button></div>';
+      if(!own&&!claimed&&!isG())h+='<div style="margin-top:10px"><button class="btn bt sm" onclick="claimPass(\''+e.id+'\')">✋ Assumir este plantão agora</button></div>';
       else if(claimed)h+='<p style="font-size:12px;color:var(--gn);margin-top:8px">✋ '+dSN(e.toDocId)+' quer assumir — aguardando gestor</p>';
       else if(own)h+='<p style="font-size:12px;color:var(--tx2);margin-top:8px">Seu repasse</p><button class="btn bgh xs" style="margin-top:6px" onclick="cancelExch(\''+e.id+'\')">Cancelar repasse</button>';
       if(isG())h+='<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">'+(claimed?'<button class="btn bgn xs" onclick="approveExch(\''+e.id+'\')">✓ Aprovar</button>':'')+'<button class="btn br xs" onclick="rejectExch(\''+e.id+'\')">✕ Recusar</button></div>';
@@ -893,8 +893,21 @@ function loadThS(){var sel=G('EXDOC');if(!sel)return;var td=tdStr();var ss=ST.sh
 function doExch(){
   var f=G('EXMY'),d=G('EXDOC'),t=G('EXTH'),r=G('EXREA');
   if(!f||!d||!t||!f.value||!d.value||!t.value){showToast('Preencha todos os campos.','err');return;}
-  var e={id:uid(),type:'exchange',fromDocId:CU.id,fromShiftId:f.value,toDocId:d.value,toShiftId:t.value,reason:r?r.value.trim():'',status:'pending',createdAt:Date.now()};
-  ST.exchanges.push(e);save('exchanges').then(function(){addLog('Troca solicitada: '+CU.name+' ↔ '+dSN(d.value));pushNotif('🔄 '+dSN(CU.id)+' solicitou troca com '+dSN(d.value)+'. Aguardando aprovação do gestor.');closeModal();syncing=false;doSync().then(function(){goTo('exchanges');});});
+  // Execute swap immediately — no gestor approval needed
+  var fS=ST.shifts.find(function(x){return x.id===f.value;});
+  var tS=ST.shifts.find(function(x){return x.id===t.value;});
+  if(!fS||!tS){showToast('Plantões não encontrados.','err');return;}
+  // Swap the docIds
+  var tmp=fS.docId; fS.docId=tS.docId; tS.docId=tmp;
+  var e={id:uid(),type:'exchange',fromDocId:CU.id,fromShiftId:f.value,toDocId:d.value,toShiftId:t.value,reason:r?r.value.trim():'',status:'approved',resolvedAt:Date.now(),createdAt:Date.now(),autoApproved:true};
+  ST.exchanges.push(e);
+  save('shifts');
+  save('exchanges').then(function(){
+    addLog('✅ Troca realizada: '+CU.name+' ↔ '+dSN(d.value)+' ('+fD(fS.date)+' ↔ '+fD(tS.date)+')');
+    pushNotif('🔄 Troca realizada: '+dSN(CU.id)+' trocou com '+dSN(d.value)+' — '+fD(fS.date)+' ↔ '+fD(tS.date));
+    closeModal();syncing=false;doSync().then(function(){goTo('myshifts');});
+    showToast('✅ Troca realizada com sucesso!','ok');
+  });
 }
 function modalPass(myShiftId){
   var td=tdStr(),myShifts=ST.shifts.filter(function(s){return s.docId===CU.id&&s.status==='open'&&s.date>=td;});
@@ -905,8 +918,15 @@ function modalPass(myShiftId){
 function doPass(){
   var pss=G('PASSSH'),psr=G('PASSREA');if(!pss||!pss.value){showToast('Selecione um plantão.','err');return;}
   var s=ST.shifts.find(function(x){return x.id===pss.value;});
-  var e={id:uid(),type:'passover',fromDocId:CU.id,fromShiftId:pss.value,toDocId:null,toShiftId:null,reason:psr?psr.value.trim():'',status:'pending',createdAt:Date.now()};
-  ST.exchanges.push(e);save('exchanges').then(function(){addLog('Repasse anunciado: '+CU.name+' — '+(s?fD(s.date)+' '+sLbl(s.type):''));pushNotif('📤 '+dSN(CU.id)+' anunciou REPASSE: '+(s?fD(s.date)+' · '+sLbl(s.type):'')+' — Veja no Mural!');closeModal();syncing=false;doSync().then(function(){goTo('board');});showToast('Repasse anunciado para todos!','ok');});
+  // Repasse announced — available for direct claim (no approval needed)
+  var e={id:uid(),type:'passover',fromDocId:CU.id,fromShiftId:pss.value,toDocId:null,toShiftId:null,reason:psr?psr.value.trim():'',status:'open',createdAt:Date.now()};
+  ST.exchanges.push(e);
+  save('exchanges').then(function(){
+    addLog('📤 Repasse anunciado: '+CU.name+' — '+(s?fD(s.date)+' '+sLbl(s.type):''));
+    pushNotif('📤 '+dSN(CU.id)+' quer repassar: '+(s?fD(s.date)+' · '+sLbl(s.type):'')+' — Abra o Mural para assumir!');
+    closeModal();syncing=false;doSync().then(function(){goTo('board');});
+    showToast('📢 Repasse anunciado! Qualquer plantonista pode assumir.','ok');
+  });
 }
 function claimPass(exchId){
   var e=ST.exchanges.find(function(x){return x.id===exchId;});if(!e)return;
@@ -914,7 +934,25 @@ function claimPass(exchId){
   var s=ST.shifts.find(function(x){return x.id===e.fromShiftId;});
   openModal('<div class="mh"><h3>✋ Assumir Plantão</h3><button class="mcl" onclick="closeModal()">✕</button></div><div class="mbd"><p style="font-size:13px;margin-bottom:12px">Deseja assumir o plantão de <b>'+dSN(e.fromDocId)+'</b>?</p><div style="background:var(--sf2);border-radius:9px;padding:12px"><b>'+(s?fD(s.date)+' · '+sLbl(s.type):'')+'</b><p style="font-size:12px;color:var(--tx2);margin-top:4px">'+(s?sTime(s.type):'')+'</p></div><p style="font-size:12px;color:var(--tx2);margin-top:10px">⚠️ O gestor precisará aprovar.</p></div><div class="mft"><button class="btn bgh sm" onclick="closeModal()">Cancelar</button><button class="btn bt sm" onclick="doClaim(\''+exchId+'\')">✋ Confirmar</button></div>');
 }
-function doClaim(exchId){var e=ST.exchanges.find(function(x){return x.id===exchId;});if(!e)return;e.toDocId=CU.id;save('exchanges').then(function(){addLog(CU.name+' solicitou assumir repasse de '+dSN(e.fromDocId));pushNotif('✋ '+dSN(CU.id)+' quer assumir o repasse de '+dSN(e.fromDocId)+'. Aguardando aprovação.');closeModal();syncing=false;doSync().then(function(){goTo('board');});showToast('Solicitado! Aguardando gestor.','ok');});}
+function doClaim(exchId){
+  var e=ST.exchanges.find(function(x){return x.id===exchId;});if(!e)return;
+  // Direct claim — no approval needed, shift transfers immediately
+  var s=ST.shifts.find(function(x){return x.id===e.fromShiftId;});
+  if(!s){showToast('Plantão não encontrado.','err');return;}
+  var prevDoc=s.docId;
+  s.docId=CU.id; // Transfer shift immediately
+  e.toDocId=CU.id;
+  e.status='approved';
+  e.resolvedAt=Date.now();
+  e.autoApproved=true;
+  save('shifts');
+  save('exchanges').then(function(){
+    addLog('✅ Repasse assumido: '+CU.name+' assumiu plantão de '+dSN(prevDoc)+' ('+fD(s.date)+' '+sLbl(s.type)+')');
+    pushNotif('✅ '+dSN(CU.id)+' assumiu o repasse de '+dSN(prevDoc)+': '+fD(s.date)+' · '+sLbl(s.type));
+    closeModal();syncing=false;doSync().then(function(){goTo('board');});
+    showToast('✅ Plantão assumido com sucesso!','ok');
+  });
+}
 function approveExch(id){
   var e=ST.exchanges.find(function(x){return x.id===id;});if(!e)return;
   if(e.type==='passover'){if(!e.toDocId){showToast('Nenhum médico se voluntariou ainda.','err');return;}var s=ST.shifts.find(function(x){return x.id===e.fromShiftId;});if(s){s.docId=e.toDocId;save('shifts');}}
