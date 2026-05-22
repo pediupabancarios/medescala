@@ -419,6 +419,9 @@ function dSN(id){var d=dBy(id);if(!d)return'—';return d.name.replace(/^(Dr\.|D
 function avH(doc,sz){sz=sz||36;if(!doc)return'';return'<div class="av" style="width:'+sz+'px;height:'+sz+'px;font-size:'+Math.round(sz*.33)+'px;background:'+h2r(doc.color||'#2b8fef',.18)+';color:'+(doc.color||'#2b8fef')+';flex-shrink:0">'+doc.ini+'</div>';}
 function isG(){return CU&&CU.role==='gestor';}
 
+// Load saved geo settings
+try{var _gs=JSON.parse(localStorage.getItem('upa_geo')||'{}');if(_gs.lat)UPA_LAT=_gs.lat;if(_gs.lng)UPA_LNG=_gs.lng;if(_gs.radius)UPA_RADIUS=_gs.radius;}catch(e){}
+
 /* ── SUPABASE API ── */
 function sbH(extra){
   var h={apikey:SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json'};
@@ -472,6 +475,75 @@ function sbTest(){
     if(!r.ok)return r.text().then(function(t){throw new Error(t);});
     return 'ok';
   });
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   GEOLOCATION — Cerca Virtual 50m
+══════════════════════════════════════════════════════════ */
+// UPA Coordinates — Gestor pode alterar em Admin → Configurações
+var UPA_LAT  = -7.148314;
+var UPA_LNG  = -34.842389;
+var UPA_RADIUS = 50; // metros
+
+function distMeters(lat1, lng1, lat2, lng2) {
+  var R = 6371000;
+  var dLat = (lat2-lat1) * Math.PI/180;
+  var dLng = (lng2-lng1) * Math.PI/180;
+  var a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+          Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180) *
+          Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function checkGeoAndRun(successFn) {
+  // Gestor bypasses geo check
+  if (isG()) { successFn(); return; }
+  if (!navigator.geolocation) {
+    openModal('<div class="mh"><h3>📍 GPS não disponível</h3><button class="mcl" onclick="closeModal()">✕</button></div>'
+      +'<div class="mbd"><div style="text-align:center;padding:20px">'
+      +'<div style="font-size:50px;margin-bottom:12px">📵</div>'
+      +'<p style="font-size:14px;font-weight:600;color:var(--rs)">GPS não disponível neste dispositivo</p>'
+      +'<p style="font-size:13px;color:var(--tx2);margin-top:8px">Solicite ao gestor Dr. Rodrigo para iniciar/encerrar seu plantão.</p>'
+      +'</div></div>');
+    return;
+  }
+  // Show loading
+  showToast('📍 Verificando localização...', 'info');
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      var dist = distMeters(pos.coords.latitude, pos.coords.longitude, UPA_LAT, UPA_LNG);
+      var distStr = dist < 1000 ? Math.round(dist)+'m' : (dist/1000).toFixed(1)+'km';
+      if (dist <= UPA_RADIUS) {
+        // Within range — proceed
+        successFn();
+      } else {
+        // Out of range — block
+        openModal('<div class="mh"><h3>📍 Fora da UPA</h3><button class="mcl" onclick="closeModal()">✕</button></div>'
+          +'<div class="mbd"><div style="text-align:center;padding:16px">'
+          +'<div style="font-size:50px;margin-bottom:12px">🏥❌</div>'
+          +'<p style="font-size:15px;font-weight:700;color:var(--rs);margin-bottom:8px">Você está fora da UPA</p>'
+          +'<p style="font-size:13px;color:var(--tx2);margin-bottom:16px">Você está a <b style="color:var(--gd)">'+distStr+'</b> da UPA.<br>É necessário estar a menos de <b>'+UPA_RADIUS+'m</b> para iniciar ou encerrar plantão.</p>'
+          +'<div style="background:rgba(43,143,239,.1);border:1px solid rgba(43,143,239,.25);border-radius:10px;padding:12px;font-size:12.5px;color:var(--tx2)">'
+          +'📞 Se precisar de ajuda, contate o gestor:<br>'
+          +'<b style="color:var(--tx)">Dr. Rodrigo Cahuana — CRM 11707/PB</b>'
+          +'</div></div></div>');
+      }
+    },
+    function(err) {
+      var msg = 'Erro ao obter localização.';
+      if (err.code === 1) msg = 'Permissão de GPS negada. Ative o GPS nas configurações do celular e tente novamente.';
+      else if (err.code === 2) msg = 'GPS indisponível no momento. Tente novamente.';
+      else if (err.code === 3) msg = 'GPS demorou muito. Verifique se o GPS está ativado.';
+      openModal('<div class="mh"><h3>📍 Erro de GPS</h3><button class="mcl" onclick="closeModal()">✕</button></div>'
+        +'<div class="mbd"><div style="text-align:center;padding:16px">'
+        +'<div style="font-size:50px;margin-bottom:12px">📡</div>'
+        +'<p style="font-size:14px;font-weight:600;color:var(--rs);margin-bottom:8px">'+msg+'</p>'
+        +'<p style="font-size:12.5px;color:var(--tx2)">Solicite ao gestor para iniciar/encerrar seu plantão.</p>'
+        +'</div></div>');
+    },
+    {enableHighAccuracy: true, timeout: 10000, maximumAge: 0}
+  );
 }
 
 /* ── SYNC ── */
@@ -705,7 +777,7 @@ function markAllRead(){ST.notifs.forEach(function(n){if(n.readBy.indexOf(CU.id)=
 /* ── NAV ── */
 function navItems(){
   var b=[{id:'dashboard',ic:'📊',lb:'Dashboard'},{id:'calendar',ic:'📅',lb:'Escala Geral'},{id:'myshifts',ic:'🏥',lb:'Meu Plantão'},{id:'board',ic:'📢',lb:'Mural de Plantões'},{id:'exchanges',ic:'🔄',lb:'Trocas & Repassses'}];
-  if(isG())b.push({id:'ms',ic:'📋',lb:'Gerenciar Plantões',sec:'Admin'},{id:'mm',ic:'🗓️',lb:'Meses'},{id:'md',ic:'👨‍⚕️',lb:'Plantonistas'},{id:'rep',ic:'📈',lb:'Relatórios'},{id:'lg',ic:'📝',lb:'Log'});
+  if(isG())b.push({id:'ms',ic:'📋',lb:'Gerenciar Plantões',sec:'Admin'},{id:'mm',ic:'🗓️',lb:'Meses'},{id:'md',ic:'👨‍⚕️',lb:'Plantonistas'},{id:'geo',ic:'📍',lb:'Localização UPA'},{id:'rep',ic:'📈',lb:'Relatórios'},{id:'lg',ic:'📝',lb:'Log'});
   return b;
 }
 function buildSB(){
@@ -731,7 +803,7 @@ function goTo(pg){
   document.querySelectorAll('.bni').forEach(function(e){e.classList.remove('active');});
   var ni=G('NI-'+pg),bi=G('BNI-'+pg);if(ni)ni.classList.add('active');if(bi)bi.classList.add('active');
   var cont=G('CONT');if(cont)cont.innerHTML='';clearInterval(shiftT);
-  var pgs={dashboard:pgDash,calendar:pgCal,myshifts:pgMy,board:pgBoard,exchanges:pgExch,ms:pgMS,mm:pgMM,md:pgMD,rep:pgRep,lg:pgLG};
+  var pgs={dashboard:pgDash,calendar:pgCal,myshifts:pgMy,board:pgBoard,exchanges:pgExch,ms:pgMS,mm:pgMM,md:pgMD,rep:pgRep,lg:pgLG,geo:pgGeo};
   if(pgs[pg])pgs[pg]();
   closeSb();var np=G('NP');if(np)np.classList.remove('on');
 }
@@ -823,6 +895,11 @@ function changePass(){
 function modalStart(id){
   var s=ST.shifts.find(function(x){return x.id===id;});if(!s)return;
   if(ST.shifts.find(function(x){return x.docId===CU.id&&x.status==='active';})){showToast('Você já tem um plantão ativo!','err');return;}
+  // Geo check first (gestor bypasses automatically)
+  checkGeoAndRun(function(){ _doModalStart(id); });
+}
+function _doModalStart(id){
+  var s=ST.shifts.find(function(x){return x.id===id;});if(!s)return;
   openModal('<div class="mh"><h3>▶ Iniciar Plantão</h3><button class="mcl" onclick="closeModal()">✕</button></div><div class="mbd"><div style="background:var(--sf2);border-radius:9px;padding:12px;margin-bottom:14px"><b>'+fD(s.date)+' · '+sLbl(s.type)+'</b><p style="font-size:12px;color:var(--tx2);margin-top:4px">'+sTime(s.type)+'</p></div><div class="fg"><label class="fl">Observações de início (opcional)</label><textarea id="SNOTE" placeholder="Ex: Recebendo plantão..."></textarea></div></div><div class="mft"><button class="btn bgh sm" onclick="closeModal()">Cancelar</button><button class="btn bt sm" onclick="doStart(\''+id+'\')">▶ Iniciar Plantão</button></div>');
 }
 function doStart(id){
@@ -831,6 +908,11 @@ function doStart(id){
   save('shifts').then(function(){addLog('Plantão iniciado: '+fD(s.date)+' '+sLbl(s.type)+' por '+CU.name);closeModal();doSync().then?doSync().then(function(){goTo('myshifts');}):goTo('myshifts');showToast('✅ Plantão iniciado!','ok');});
 }
 function modalClose(id){
+  var s=ST.shifts.find(function(x){return x.id===id;});if(!s)return;
+  // Geo check first (gestor bypasses automatically)
+  checkGeoAndRun(function(){ _doModalClose(id); });
+}
+function _doModalClose(id){
   var s=ST.shifts.find(function(x){return x.id===id;});if(!s)return;
   openModal('<div class="mh"><h3>🔴 Fechar Plantão</h3><button class="mcl" onclick="closeModal()">✕</button></div><div class="mbd"><div style="background:var(--sf2);border-radius:9px;padding:12px;margin-bottom:14px"><b>'+fD(s.date)+' · '+sLbl(s.type)+'</b>'+(s.startedAt?'<p style="font-size:12px;color:var(--tx2);margin-top:4px">⏱ Duração: '+elapsed(s.startedAt)+'</p>':'')+'</div><div class="fg"><label class="fl">Relatório de encerramento (opcional)</label><textarea id="CNOTE" placeholder="Intercorrências, pacientes..."></textarea></div></div><div class="mft"><button class="btn bgh sm" onclick="closeModal()">Cancelar</button><button class="btn br sm" onclick="doClose(\''+id+'\')">🔴 Fechar Plantão</button></div>');
 }
@@ -993,6 +1075,55 @@ function modalEditShift(id){
 function doEditShift(id){var s=ST.shifts.find(function(x){return x.id===id;});if(!s)return;s.date=G('SHD').value;s.type=G('SHT').value;s.docId=G('SHDOC').value;s.sector=G('SHSEC').value;s.obs=G('SHOBS').value;save('shifts').then(function(){addLog('Plantão editado: '+fD(s.date)+' '+sLbl(s.type));closeModal();pgMS();showToast('Atualizado!','ok');syncing=false;doSync();});}
 function delShift(id){if(!confirm('Excluir este plantão?'))return;var s=ST.shifts.find(function(x){return x.id===id;});ST.shifts=ST.shifts.filter(function(x){return x.id!==id;});save('shifts').then(function(){addLog('Plantão excluído: '+(s?fD(s.date)+' '+sLbl(s.type):id));pgMS();showToast('Excluído');});}
 function admStart(id){var s=ST.shifts.find(function(x){return x.id===id;});if(!s)return;s.status='active';s.startedAt=Date.now();save('shifts').then(function(){addLog('Plantão iniciado pelo gestor: '+fD(s.date)+' '+sLbl(s.type));syncing=false;doSync().then(function(){pgMS();});showToast('Iniciado!','ok');});}
+
+function pgGeo(){
+  if(!isG())return;
+  // Load saved geo settings
+  try{var gs=JSON.parse(localStorage.getItem('upa_geo')||'{}');if(gs.lat)UPA_LAT=gs.lat;if(gs.lng)UPA_LNG=gs.lng;if(gs.radius)UPA_RADIUS=gs.radius;}catch(e){}
+  var h='<div class="page"><div class="ph"><h2>📍 Configuração de Localização</h2>'
+    +'<p>Defina a localização da UPA e o raio da cerca virtual</p></div>'
+    +'<div class="card"><div class="ch"><h3>📡 Coordenadas da UPA</h3></div><div class="cb">'
+    +'<div style="background:rgba(43,143,239,.08);border:1px solid rgba(43,143,239,.2);border-radius:10px;padding:12px;margin-bottom:16px;font-size:12.5px;color:var(--tx2)">'
+    +'💡 Para obter as coordenadas: abra o Google Maps na UPA → pressione o local → copie a latitude e longitude que aparecem.</div>'
+    +'<div class="fr">'
+    +'<div class="fg"><label class="fl">Latitude</label><input type="text" id="GEOLAT" value="'+UPA_LAT+'" placeholder="-7.148314"></div>'
+    +'<div class="fg"><label class="fl">Longitude</label><input type="text" id="GEOLNG" value="'+UPA_LNG+'" placeholder="-34.842389"></div>'
+    +'</div><div class="fg"><label class="fl">Raio da cerca virtual (metros)</label>'
+    +'<input type="text" id="GEORAD" value="'+UPA_RADIUS+'" placeholder="50">'
+    +'<small style="color:var(--tx2);font-size:11px;display:block;margin-top:4px">Recomendado: 50m. Médicos só podem iniciar/encerrar plantão dentro deste raio.</small></div>'
+    +'<button class="btn bp sm" onclick="saveGeo()">💾 Salvar Configuração</button>'
+    +'</div></div>'
+    +'<div class="card"><div class="ch"><h3>🗺️ Localização atual</h3></div><div class="cb">'
+    +'<p style="font-size:13px;color:var(--tx2);margin-bottom:12px">Clique para verificar sua distância atual da UPA:</p>'
+    +'<button class="btn bgh sm" onclick="testGeo()">📍 Verificar minha localização agora</button>'
+    +'<div id="GEODIST" style="margin-top:12px"></div>'
+    +'</div></div></div>';
+  G('CONT').innerHTML=h;
+}
+function saveGeo(){
+  var lat=parseFloat(G('GEOLAT').value),lng=parseFloat(G('GEOLNG').value),rad=parseInt(G('GEORAD').value);
+  if(isNaN(lat)||isNaN(lng)||isNaN(rad)){showToast('Valores inválidos.','err');return;}
+  UPA_LAT=lat;UPA_LNG=lng;UPA_RADIUS=rad;
+  try{localStorage.setItem('upa_geo',JSON.stringify({lat:lat,lng:lng,radius:rad}));}catch(e){}
+  addLog('Configuração de geo atualizada: lat='+lat+' lng='+lng+' raio='+rad+'m');
+  showToast('✅ Localização salva! Raio: '+rad+'m','ok');
+}
+function testGeo(){
+  var d=G('GEODIST');if(d)d.innerHTML='<p style="color:var(--tx2)">📡 Obtendo localização...</p>';
+  if(!navigator.geolocation){if(d)d.innerHTML='<p style="color:var(--rs)">GPS não disponível.</p>';return;}
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var dist=Math.round(distMeters(pos.coords.latitude,pos.coords.longitude,UPA_LAT,UPA_LNG));
+    var ok=dist<=UPA_RADIUS;
+    var acc=Math.round(pos.coords.accuracy);
+    if(d)d.innerHTML='<div style="background:'+(ok?'rgba(93,219,138,.1)':'rgba(240,92,122,.1)')+';border:1px solid '+(ok?'rgba(93,219,138,.3)':'rgba(240,92,122,.3)')+';border-radius:10px;padding:14px;text-align:center">'
+      +'<div style="font-size:32px;margin-bottom:8px">'+(ok?'✅':'❌')+'</div>'
+      +'<b style="font-size:15px;color:'+(ok?'var(--gn)':'var(--rs)')+'">'+dist+'m da UPA</b>'
+      +'<p style="font-size:12px;color:var(--tx2);margin-top:6px">'+(ok?'Dentro da cerca virtual ('+UPA_RADIUS+'m) ✅':'Fora da cerca virtual (limite: '+UPA_RADIUS+'m) ❌')+'</p>'
+      +'<p style="font-size:11px;color:var(--tx3);margin-top:4px">Precisão do GPS: ±'+acc+'m</p>'
+      +'<p style="font-size:10px;color:var(--tx3);margin-top:2px">Coords: '+pos.coords.latitude.toFixed(5)+', '+pos.coords.longitude.toFixed(5)+'</p>'
+      +'</div>';
+  },function(err){if(d)d.innerHTML='<p style="color:var(--rs)">Erro GPS: '+err.message+'</p>';},{enableHighAccuracy:true,timeout:10000});
+}
 
 function pgMM(){if(!isG())return;var h='<div class="page"><div class="ph"><h2>🗓️ Meses da Escala</h2></div><div class="card"><div class="ch"><h3>Adicionar Mês</h3></div><div class="cb"><div class="fr"><div class="fg"><label class="fl">Mês</label><input type="month" id="NMON"></div><div class="fg"><label class="fl">Descrição</label><input type="text" id="NDES" placeholder="Ex: Férias escolares"></div></div><button class="btn bp sm" onclick="doAddMonth()">+ Adicionar</button></div></div><div class="card"><div class="ch"><h3>Meses Cadastrados</h3></div><div class="tw"><table><thead><tr><th>Mês</th><th>Descrição</th><th>Plantões</th><th></th></tr></thead><tbody>';ST.months.slice().sort(function(a,b){return a.month.localeCompare(b.month);}).forEach(function(m){var c=ST.shifts.filter(function(s){return s.date.startsWith(m.month);}).length;h+='<tr><td style="font-family:\'DM Mono\',monospace">'+m.month+'</td><td>'+(m.desc||'—')+'</td><td>'+c+'</td><td><button class="btn bgh xs" style="color:var(--rs)" onclick="doRmMonth(\''+m.month+'\')">Remover</button></td></tr>';});h+='</tbody></table></div></div></div>';G('CONT').innerHTML=h;}
 function doAddMonth(){var m=G('NMON'),d=G('NDES');if(!m||!m.value){showToast('Selecione um mês.','err');return;}if(ST.months.find(function(x){return x.month===m.value;})){showToast('Mês já existe.','err');return;}var mo={month:m.value,desc:d?d.value:''};ST.months.push(mo);save('months').then(function(){addLog('Mês adicionado: '+m.value);pgMM();showToast('Adicionado!','ok');});}
