@@ -2216,7 +2216,7 @@ function pgPerfil(){
     +'<div class="card"><div class="ch"><h3>🔐 Biometria</h3></div><div class="cb">'
     +'<p style="font-size:13px;color:var(--tx2);margin-bottom:12px">Use Face ID ou digital para entrar sem digitar senha.</p>'
     +'<div id="BIOSTAT" style="margin-bottom:12px"></div>'
-    +'<button class="btn bp sm" onclick="setupBiometric(''+CU.login+'',''+CU.name+'')">🔐 Ativar / Reconfigurar Biometria</button>'
+    +'<button class="btn bp sm" onclick="registerBiometric()">🔐 Configurar Face ID / Touch ID</button>'
     +'<button class="btn bgh sm" style="margin-left:8px;color:var(--rs)" onclick="removeBiometric()">🗑 Remover</button>'
     +'</div></div>'
     // Biometric section
@@ -2503,4 +2503,12 @@ function exportPDF(){
       +'<td>'+ms.filter(function(s){return s.type==='d'||s.type==='n';}).length+'</td>'
       +'<td>'+(ms.length*12)+'h</td></tr>';
   });
-  html+='</tbody></table></body></html>
+  html+='<\/tbody><\/table><\/body>\n<\/html>';
+  var win=window.open('','_blank');
+  if(win){win.document.write(html);win.document.close();setTimeout(function(){win.print();},500);}
+  else{showToast('Permita pop-ups para gerar o PDF','err');}
+}
+
+</script>
+</body>
+</html>
