@@ -318,7 +318,7 @@ textarea{resize:vertical;min-height:65px;line-height:1.5}
       <div class="tb-r">
         <div class="active-badge" id="ACTBADGE"><span class="blink">●</span>&nbsp;Ativo</div>
         <button class="notif-btn" onclick="toggleNP()">🔔<span id="NCNT"></span></button>
-        <span id="CLK">--:--:--</span>
+        <button class="btn bgh xs" onclick="toggleTheme()" style="padding:4px 8px;font-size:14px" title="Alternar tema" id="THMBTN">🌙</button><span id="CLK">--:--:--</span>
       </div>
     </div>
     <div id="SYNCBAR">
@@ -483,6 +483,8 @@ function sbTest(){
 ══════════════════════════════════════════════════════════ */
 // UPA Coordinates — Gestor pode alterar em Admin → Configurações
 var UPA_LAT  = -7.148314;
+// Theme
+var DARK_MODE = true;
 var UPA_LNG  = -34.842389;
 var UPA_RADIUS = 50; // metros
 
@@ -560,7 +562,7 @@ function doSync(){
   if(!SURL||!SKEY){setSyncUI('err','Banco não configurado');return Promise.resolve();}
   syncing=true;
   setSyncUI('loading','Sincronizando...');
-  var keys=['docs','shifts','months','exchanges','notifs','log'];
+  var keys=['docs','shifts','months','exchanges','notifs','log','avisos','msgs'];
   var proms=keys.map(function(k){
     return sbGet(k).then(function(v){
       if(v!==null&&v!==undefined){
@@ -585,6 +587,8 @@ function doSync(){
     if(!ST.notifs)ST.notifs=[];
     if(!ST.log)ST.log=[];
     if(!ST.months)ST.months=[];
+    if(!ST.avisos)ST.avisos=[];
+    if(!ST.msgs)ST.msgs=[];
     setSyncUI('ok','Sincronizado '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
     updateNBadge();
     if(CU){
@@ -607,7 +611,7 @@ function save(key){
   });
 }
 function saveAll(){
-  return Promise.all(['docs','shifts','months','exchanges','notifs','log'].map(function(k){return save(k);}));
+  return Promise.all(['docs','shifts','months','exchanges','notifs','log','avisos','msgs'].map(function(k){return save(k);}));
 }
 
 function addLog(msg){
@@ -622,6 +626,7 @@ function showSetup(){
   G('SETUP').classList.add('on');
 }
 function boot(){
+  initTheme();
   try{var c=JSON.parse(localStorage.getItem(CFG_KEY)||'{}');if(c.url&&c.key){SURL=c.url;SKEY=c.key;}}catch(e){}
   if(!SURL||!SKEY){showSetup();return;}
   G('LS').classList.add('on');
@@ -776,8 +781,8 @@ function markAllRead(){ST.notifs.forEach(function(n){if(n.readBy.indexOf(CU.id)=
 
 /* ── NAV ── */
 function navItems(){
-  var b=[{id:'dashboard',ic:'📊',lb:'Dashboard'},{id:'calendar',ic:'📅',lb:'Escala Geral'},{id:'myshifts',ic:'🏥',lb:'Meu Plantão'},{id:'board',ic:'📢',lb:'Mural de Plantões'},{id:'exchanges',ic:'🔄',lb:'Trocas & Repassses'}];
-  if(isG())b.push({id:'ms',ic:'📋',lb:'Gerenciar Plantões',sec:'Admin'},{id:'mm',ic:'🗓️',lb:'Meses'},{id:'md',ic:'👨‍⚕️',lb:'Plantonistas'},{id:'geo',ic:'📍',lb:'Localização UPA'},{id:'rep',ic:'📈',lb:'Relatórios'},{id:'lg',ic:'📝',lb:'Log'});
+  var b=[{id:'dashboard',ic:'📊',lb:'Dashboard'},{id:'calendar',ic:'📅',lb:'Escala Geral'},{id:'myshifts',ic:'🏥',lb:'Meu Plantão'},{id:'board',ic:'📢',lb:'Mural de Plantões'},{id:'exchanges',ic:'🔄',lb:'Trocas & Repassses'},{id:'avisos',ic:'📣',lb:'Avisos'},{id:'chat',ic:'💬',lb:'Chat'},{id:'horas',ic:'⏱️',lb:'Banco de Horas'},{id:'perfil',ic:'👤',lb:'Meu Perfil'}];
+  if(isG())b.push({id:'ms',ic:'📋',lb:'Gerenciar Plantões',sec:'Admin'},{id:'mm',ic:'🗓️',lb:'Meses'},{id:'md',ic:'👨‍⚕️',lb:'Plantonistas'},{id:'geo',ic:'📍',lb:'Localização UPA'},{id:'rep',ic:'📈',lb:'Relatórios'},{id:'lg',ic:'📝',lb:'Log'},{id:'avisos',ic:'📣',lb:'Avisos'});
   return b;
 }
 function buildSB(){
@@ -793,6 +798,8 @@ function buildSB(){
 }
 function buildBN(){
   var items=[{id:'dashboard',ic:'📊',lb:'Início'},{id:'calendar',ic:'📅',lb:'Escala'},{id:'myshifts',ic:'🏥',lb:'Plantão'},{id:'board',ic:'📢',lb:'Mural'},{id:'exchanges',ic:'🔄',lb:'Trocas'}];
+  items.push({id:'chat',ic:'💬',lb:'Chat'});
+  items.push({id:'avisos',ic:'📣',lb:'Avisos'});
   if(isG())items.push({id:'ms',ic:'⚙️',lb:'Admin'});
   G('BNW').innerHTML=items.map(function(i){return'<button class="bni" id="BNI-'+i.id+'" onclick="goTo(\''+i.id+'\')" ><span class="ic">'+i.ic+'</span>'+i.lb+'</button>';}).join('');
 }
@@ -803,7 +810,7 @@ function goTo(pg){
   document.querySelectorAll('.bni').forEach(function(e){e.classList.remove('active');});
   var ni=G('NI-'+pg),bi=G('BNI-'+pg);if(ni)ni.classList.add('active');if(bi)bi.classList.add('active');
   var cont=G('CONT');if(cont)cont.innerHTML='';clearInterval(shiftT);
-  var pgs={dashboard:pgDash,calendar:pgCal,myshifts:pgMy,board:pgBoard,exchanges:pgExch,ms:pgMS,mm:pgMM,md:pgMD,rep:pgRep,lg:pgLG,geo:pgGeo};
+  var pgs={dashboard:pgDash,calendar:pgCal,myshifts:pgMy,board:pgBoard,exchanges:pgExch,ms:pgMS,mm:pgMM,md:pgMD,rep:pgRep,lg:pgLG,geo:pgGeo,avisos:pgAvisos,chat:pgChat,horas:pgHoras,perfil:pgPerfil};
   if(pgs[pg])pgs[pg]();
   closeSb();var np=G('NP');if(np)np.classList.remove('on');
 }
@@ -825,6 +832,16 @@ function pgDash(){
   var future=my.filter(function(s){return s.date>td&&s.status==='open';}).length,done=my.filter(function(s){return s.status==='closed';}).length;
   var pex=ST.exchanges.filter(function(e){return(e.fromDocId===CU.id||e.toDocId===CU.id)&&e.status==='pending';}).length;
   var h='<div class="page"><div class="ph"><h2>Dashboard</h2><p>Olá, '+CU.name.replace(/^(Dr\.|Dra\.)\s*/i,'').split(' ')[0]+'!</p></div>';
+  // Shift reminder check
+  var tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+  var tomStr=tomorrow.toISOString().slice(0,10);
+  var nextShift=my.filter(function(s){return s.date<=tomStr&&s.date>=td&&s.status==='open';}).sort(function(a,b){return a.date.localeCompare(b.date);})[0];
+  if(nextShift&&nextShift.date===tomStr){
+    h+='<div style="background:rgba(232,168,37,.1);border:1px solid rgba(232,168,37,.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">'
+      +'<span style="font-size:24px">⏰</span>'
+      +'<div><b style="font-size:13px;color:var(--gd)">Lembrete: Plantão amanhã!</b>'
+      +'<p style="font-size:12px;color:var(--tx2);margin-top:2px">'+sLbl(nextShift.type)+' · '+sTime(nextShift.type)+'</p></div></div>';
+  }
   if(active){h+='<div class="abn"><h3>🟢 Plantão em andamento</h3><div class="atimer" id="TMR1">'+elapsed(active.startedAt)+'</div><small style="color:var(--tx2);margin-top:5px;display:block">'+fD(active.date)+' · '+sLbl(active.type)+' · '+sTime(active.type)+'</small><div style="margin-top:11px;display:flex;gap:7px;flex-wrap:wrap"><button class="btn br sm" onclick="modalClose(\''+active.id+'\')">🔴 Fechar Plantão</button><button class="btn bgh sm" onclick="goTo(\'myshifts\')">Ver detalhes →</button></div></div>';}
   h+='<div class="sg"><div class="sc cb"><div class="lb">Total</div><div class="vl">'+my.length+'</div><div class="sb">plantões</div></div><div class="sc ct"><div class="lb">Próximos</div><div class="vl">'+future+'</div><div class="sb">agendados</div></div><div class="sc cgn"><div class="lb">Concluídos</div><div class="vl">'+done+'</div><div class="sb">finalizados</div></div><div class="sc cg"><div class="lb">Trocas Pend.</div><div class="vl">'+pex+'</div><div class="sb">aguardando</div></div></div>';
   var ups=my.filter(function(s){return s.date>=td&&s.status!=='closed'&&s.status!=='active';}).sort(function(a,b){return a.date.localeCompare(b.date);}).slice(0,5);
@@ -1152,6 +1169,292 @@ function pgLG(){if(!isG())return;var h='<div class="page"><div class="ph"><h2>�
 /* ── PWA ── */
 function checkPWA(){var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent),standalone=window.matchMedia('(display-mode:standalone)').matches||!!window.navigator.standalone;if(standalone)return;if(isIOS){setTimeout(function(){G('IOT').classList.add('on');},5000);return;}window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dP=e;setTimeout(function(){G('IB').classList.add('on');},3000);});}
 function installApp(){if(dP){dP.prompt();dP.userChoice.then(function(){dP=null;G('IB').classList.remove('on');});}}
+
+
+/* ══════════════════════════════════════════════════════════
+   TEMA CLARO/ESCURO
+══════════════════════════════════════════════════════════ */
+function initTheme(){
+  try{var t=localStorage.getItem('mes_theme');DARK_MODE=(t===null)?true:(t==='dark');}catch(e){}
+  applyTheme();
+}
+function applyTheme(){
+  var tb=document.getElementById('THMBTN');
+  if(tb)tb.textContent=DARK_MODE?'🌙':'☀️';
+  if(DARK_MODE){
+    document.documentElement.style.setProperty('--bg','#07101f');
+    document.documentElement.style.setProperty('--sf','#111f33');
+    document.documentElement.style.setProperty('--sf2','#162840');
+    document.documentElement.style.setProperty('--sf3','#1c3050');
+    document.documentElement.style.setProperty('--bd','#1e3254');
+    document.documentElement.style.setProperty('--bd2','#2a4270');
+    document.documentElement.style.setProperty('--tx','#dde8f5');
+    document.documentElement.style.setProperty('--tx2','#8ba4c4');
+    document.documentElement.style.setProperty('--tx3','#4d6a8a');
+  } else {
+    document.documentElement.style.setProperty('--bg','#f0f4f8');
+    document.documentElement.style.setProperty('--sf','#ffffff');
+    document.documentElement.style.setProperty('--sf2','#e8f0f7');
+    document.documentElement.style.setProperty('--sf3','#dce8f2');
+    document.documentElement.style.setProperty('--bd','#c8d8e8');
+    document.documentElement.style.setProperty('--bd2','#aac0d4');
+    document.documentElement.style.setProperty('--tx','#0d1f33');
+    document.documentElement.style.setProperty('--tx2','#3a5570');
+    document.documentElement.style.setProperty('--tx3','#6a8aa8');
+  }
+}
+function toggleTheme(){
+  DARK_MODE=!DARK_MODE;
+  try{localStorage.setItem('mes_theme',DARK_MODE?'dark':'light');}catch(e){}
+  applyTheme();
+  showToast(DARK_MODE?'🌙 Modo escuro':'☀️ Modo claro','ok');
+}
+
+/* ══════════════════════════════════════════════════════════
+   PAGE: AVISOS
+══════════════════════════════════════════════════════════ */
+function pgAvisos(){
+  if(!ST.avisos)ST.avisos=[];
+  var h='<div class="page"><div class="ph"><h2>📣 Avisos</h2>'
+    +'<p>Comunicados do gestor para toda a equipe</p></div>';
+  if(isG()){
+    h+='<div class="card"><div class="ch"><h3>+ Novo Aviso</h3></div><div class="cb">'
+      +'<div class="fg"><label class="fl">Título</label>'
+      +'<input type="text" id="AVTIT" placeholder="Ex: Reunião de equipe, Escala disponível..."></div>'
+      +'<div class="fg"><label class="fl">Mensagem</label>'
+      +'<textarea id="AVMSG" placeholder="Digite o comunicado..."></textarea></div>'
+      +'<div class="fg"><label class="fl">Prioridade</label>'
+      +'<select id="AVPRI"><option value="normal">📢 Normal</option><option value="urgent">🚨 Urgente</option><option value="info">ℹ️ Informativo</option></select></div>'
+      +'<button class="btn bp sm" onclick="doAviso()">📣 Publicar Aviso</button>'
+      +'</div></div>';
+  }
+  if(!ST.avisos.length){
+    h+='<div class="card"><div class="cb" style="text-align:center;padding:32px">'
+      +'<div style="font-size:40px;margin-bottom:12px">📭</div>'
+      +'<p style="font-size:14px;font-weight:600">Nenhum aviso no momento</p>'
+      +'<p style="font-size:12.5px;color:var(--tx2);margin-top:6px">Os comunicados do gestor aparecerão aqui.</p>'
+      +'</div></div>';
+  } else {
+    ST.avisos.slice().reverse().forEach(function(a){
+      var colors={urgent:'rgba(240,92,122,.12)',normal:'rgba(43,143,239,.08)',info:'rgba(0,201,167,.08)'};
+      var borders={urgent:'rgba(240,92,122,.3)',normal:'rgba(43,143,239,.25)',info:'rgba(0,201,167,.25)'};
+      var icons={urgent:'🚨',normal:'📢',info:'ℹ️'};
+      var pri=a.priority||'normal';
+      h+='<div style="background:'+colors[pri]+';border:1px solid '+borders[pri]+';border-radius:12px;padding:15px;margin-bottom:12px">'
+        +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">'
+        +'<div style="flex:1">'
+        +'<h4 style="font-size:14px;font-weight:700;margin-bottom:6px">'+icons[pri]+' '+a.title+'</h4>'
+        +'<p style="font-size:13px;color:var(--tx2);line-height:1.6">'+a.msg+'</p>'
+        +'<time style="font-size:11px;color:var(--tx3);font-family:'DM Mono',monospace;margin-top:8px;display:block">'+fT(a.ts)+' — Dr. Rodrigo Cahuana</time>'
+        +'</div>'
+        +(isG()?'<button class="btn bgh xs" style="color:var(--rs);flex-shrink:0" onclick="delAviso(''+a.id+'')">🗑</button>':'')
+        +'</div></div>';
+    });
+  }
+  h+='</div>';
+  G('CONT').innerHTML=h;
+}
+function doAviso(){
+  var t=G('AVTIT'),m=G('AVMSG'),p=G('AVPRI');
+  if(!t||!t.value.trim()){showToast('Digite um título.','err');return;}
+  if(!m||!m.value.trim()){showToast('Digite a mensagem.','err');return;}
+  if(!ST.avisos)ST.avisos=[];
+  var av={id:uid(),title:t.value.trim(),msg:m.value.trim(),priority:p?p.value:'normal',ts:Date.now(),authorId:CU.id};
+  ST.avisos.unshift(av);
+  save('avisos').then(function(){
+    addLog('Aviso publicado: '+av.title);
+    pushNotif('📣 Novo aviso do gestor: '+av.title);
+    t.value='';m.value='';
+    pgAvisos();showToast('✅ Aviso publicado para todos!','ok');
+  });
+}
+function delAviso(id){
+  if(!confirm('Excluir este aviso?'))return;
+  ST.avisos=ST.avisos.filter(function(a){return a.id!==id;});
+  save('avisos').then(function(){pgAvisos();showToast('Excluído');});
+}
+
+/* ══════════════════════════════════════════════════════════
+   PAGE: CHAT
+══════════════════════════════════════════════════════════ */
+function pgChat(){
+  if(!ST.msgs)ST.msgs=[];
+  var h='<div class="page"><div class="ph"><h2>💬 Chat da Equipe</h2>'
+    +'<p>Comunicação interna dos plantonistas</p></div>'
+    +'<div class="card" style="display:flex;flex-direction:column;min-height:400px">'
+    +'<div id="CHATBOX" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;max-height:480px">';
+  if(!ST.msgs.length){
+    h+='<div style="text-align:center;padding:32px;color:var(--tx2)">'
+      +'<div style="font-size:36px;margin-bottom:10px">💬</div>'
+      +'<p>Nenhuma mensagem ainda.<br>Seja o primeiro a escrever!</p></div>';
+  } else {
+    ST.msgs.slice(-50).forEach(function(m){
+      var mine=m.docId===CU.id;
+      var doc=dBy(m.docId);
+      h+='<div style="display:flex;flex-direction:'+(mine?'row-reverse':'row')+';align-items:flex-end;gap:7px">'
+        +(!mine?avH(doc,28):'')
+        +'<div style="max-width:72%">'
+        +(!mine?'<div style="font-size:10px;color:var(--tx2);margin-bottom:2px;'+(mine?'text-align:right':'')+'">'+dSN(m.docId)+'</div>':'')
+        +'<div style="background:'+(mine?'var(--bl)':'var(--sf2)')+';color:'+(mine?'#fff':'var(--tx)')+';padding:9px 13px;border-radius:'+(mine?'14px 4px 14px 14px':'4px 14px 14px 14px')+';font-size:13px;line-height:1.5">'
+        +m.text
+        +'</div>'
+        +'<div style="font-size:10px;color:var(--tx3);margin-top:3px;'+(mine?'text-align:right':'')+';font-family:'DM Mono',monospace">'+fT(m.ts).split(' ')[1]+'</div>'
+        +'</div></div>';
+    });
+  }
+  h+='</div>'
+    +'<div style="padding:12px;border-top:1px solid var(--bd);display:flex;gap:8px;align-items:flex-end">'
+    +'<textarea id="CHATMSG" placeholder="Digite sua mensagem..." style="flex:1;min-height:42px;max-height:100px;resize:none" onkeydown="chatKey(event)"></textarea>'
+    +'<button class="btn bp sm" onclick="sendMsg()" style="flex-shrink:0;height:42px">Enviar</button>'
+    +'</div></div></div>';
+  G('CONT').innerHTML=h;
+  // Scroll to bottom
+  setTimeout(function(){var cb=G('CHATBOX');if(cb)cb.scrollTop=cb.scrollHeight;},100);
+}
+function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
+function sendMsg(){
+  var el=G('CHATMSG');if(!el||!el.value.trim())return;
+  if(!ST.msgs)ST.msgs=[];
+  var m={id:uid(),docId:CU.id,text:el.value.trim(),ts:Date.now()};
+  ST.msgs.push(m);
+  if(ST.msgs.length>200)ST.msgs=ST.msgs.slice(-200);
+  el.value='';
+  save('msgs').then(function(){
+    pgChat();
+    // Only notify if mention or first message in a while
+    var lastOther=ST.msgs.slice(-10).find(function(x){return x.docId!==CU.id;});
+    if(lastOther)pushNotif('💬 '+dSN(CU.id)+': '+m.text.slice(0,60)+(m.text.length>60?'...':''));
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   PAGE: BANCO DE HORAS
+══════════════════════════════════════════════════════════ */
+function pgHoras(){
+  var h='<div class="page"><div class="ph"><h2>⏱️ Banco de Horas</h2>'
+    +'<p>Horas trabalhadas por plantão</p></div>';
+  
+  // My hours summary
+  var myShifts=ST.shifts.filter(function(s){return s.docId===CU.id;});
+  var closed=myShifts.filter(function(s){return s.status==='closed';});
+  var totalH=closed.length*12; // 12h per shift
+  var totalD=closed.filter(function(s){return s.type==='D'||s.type==='d';}).length;
+  var totalN=closed.filter(function(s){return s.type==='N'||s.type==='n';}).length;
+  var pendH=myShifts.filter(function(s){return s.status!=='closed';}).length*12;
+
+  h+='<div class="sg">'
+    +'<div class="sc cb"><div class="lb">Horas Trabalhadas</div><div class="vl">'+totalH+'h</div><div class="sb">'+closed.length+' plantões</div></div>'
+    +'<div class="sc ct"><div class="lb">Diurnos</div><div class="vl">'+totalD+'</div><div class="sb">'+(totalD*12)+'h</div></div>'
+    +'<div class="sc cg"><div class="lb">Noturnos</div><div class="vl">'+totalN+'</div><div class="sb">'+(totalN*12)+'h</div></div>'
+    +'<div class="sc cp"><div class="lb">A Trabalhar</div><div class="vl">'+pendH+'h</div><div class="sb">pendentes</div></div>'
+    +'</div>';
+
+  // Monthly breakdown
+  var months={};
+  closed.forEach(function(s){
+    var m=s.date.slice(0,7);
+    if(!months[m])months[m]={D:0,N:0,d:0,n:0,total:0};
+    months[m][s.type]=(months[m][s.type]||0)+1;
+    months[m].total+=12;
+  });
+  
+  h+='<div class="card"><div class="ch"><h3>📅 Por Mês</h3></div><div class="tw">'
+    +'<table><thead><tr><th>Mês</th><th>Diurnos</th><th>Noturnos</th><th>Extras</th><th>Total Horas</th></tr></thead><tbody>';
+  
+  Object.keys(months).sort().reverse().forEach(function(m){
+    var mo=months[m];
+    h+='<tr><td style="font-family:'DM Mono',monospace">'+m+'</td>'
+      +'<td>'+((mo.D||0)+(mo.d||0))+'</td>'
+      +'<td>'+((mo.N||0)+(mo.n||0))+'</td>'
+      +'<td>'+(mo.d||0)+(mo.n||0)+'</td>'
+      +'<td style="font-weight:700;color:var(--tl)">'+mo.total+'h</td></tr>';
+  });
+  
+  if(!Object.keys(months).length)
+    h+='<tr><td colspan="5" style="text-align:center;color:var(--tx2);padding:18px">Nenhum plantão concluído ainda</td></tr>';
+  
+  h+='</tbody></table></div></div>';
+
+  // If gestor, show all doctors
+  if(isG()){
+    h+='<div class="card"><div class="ch"><h3>👥 Horas por Médico</h3></div><div class="tw">'
+      +'<table><thead><tr><th>Médico</th><th>Plantões</th><th>Horas</th><th>Diurnos</th><th>Noturnos</th></tr></thead><tbody>';
+    ST.docs.forEach(function(d){
+      var ds=ST.shifts.filter(function(s){return s.docId===d.id&&s.status==='closed';});
+      var dh=ds.length*12;
+      var dn=ds.filter(function(s){return s.type==='D'||s.type==='d';}).length;
+      var nn=ds.filter(function(s){return s.type==='N'||s.type==='n';}).length;
+      h+='<tr><td><div style="display:flex;align-items:center;gap:7px">'+avH(d,24)
+        +'<span>'+d.name.replace(/^(Dr\.|Dra\.)\s*/i,'').split(' ').slice(0,2).join(' ')+'</span></div></td>'
+        +'<td style="font-family:'DM Mono',monospace">'+ds.length+'</td>'
+        +'<td style="font-weight:700;color:var(--tl);font-family:'DM Mono',monospace">'+dh+'h</td>'
+        +'<td style="font-family:'DM Mono',monospace">'+dn+'</td>'
+        +'<td style="font-family:'DM Mono',monospace">'+nn+'</td></tr>';
+    });
+    h+='</tbody></table></div></div>';
+  }
+  h+='</div>';
+  G('CONT').innerHTML=h;
+}
+
+/* ══════════════════════════════════════════════════════════
+   PAGE: PERFIL
+══════════════════════════════════════════════════════════ */
+function pgPerfil(){
+  var doc=ST.docs.find(function(d){return d.id===CU.id;})||CU;
+  var myShifts=ST.shifts.filter(function(s){return s.docId===CU.id;});
+  var closed=myShifts.filter(function(s){return s.status==='closed';});
+  
+  var h='<div class="page"><div class="ph"><h2>👤 Meu Perfil</h2></div>'
+    // Avatar big
+    +'<div class="card"><div class="cb" style="text-align:center;padding:24px">'
+    +'<div class="av" style="width:80px;height:80px;font-size:28px;background:'+h2r(doc.color||'#2b8fef',.2)+';color:'+(doc.color||'#2b8fef')+';margin:0 auto 14px">'+doc.ini+'</div>'
+    +'<h3 style="font-family:'Fraunces',serif;font-size:18px;font-weight:700">'+doc.name+'</h3>'
+    +'<p style="color:var(--tx2);font-size:12.5px;margin-top:4px">'+(doc.spec||'Pediatria')+' · CRM '+doc.crm+'/PB</p>'
+    +'<p style="color:var(--tx2);font-size:12px;margin-top:2px">Matrícula: '+(doc.mat||'—')+'</p>'
+    +(doc.role==='gestor'?'<span class="bdg gestor" style="margin-top:10px">👑 Gestor / Coordenador</span>':'')
+    +'</div></div>'
+
+    // Stats
+    +'<div class="sg">'
+    +'<div class="sc cb"><div class="lb">Total</div><div class="vl">'+myShifts.length+'</div><div class="sb">plantões</div></div>'
+    +'<div class="sc cgn"><div class="lb">Concluídos</div><div class="vl">'+closed.length+'</div><div class="sb">finalizados</div></div>'
+    +'<div class="sc ct"><div class="lb">Horas</div><div class="vl">'+(closed.length*12)+'h</div><div class="sb">trabalhadas</div></div>'
+    +'<div class="sc cg"><div class="lb">Trocas</div><div class="vl">'+ST.exchanges.filter(function(e){return e.fromDocId===CU.id||e.toDocId===CU.id;}).length+'</div><div class="sb">realizadas</div></div>'
+    +'</div>'
+
+    // Color picker
+    +'<div class="card"><div class="ch"><h3>🎨 Personalizar</h3></div><div class="cb">'
+    +'<div class="fr">'
+    +'<div class="fg"><label class="fl">Cor identificadora</label>'
+    +'<input type="color" id="PROFCOLOR" value="'+(doc.color||'#2b8fef')+'">'
+    +'<small style="color:var(--tx2);font-size:11px;margin-top:4px;display:block">Aparece no calendário e no chat</small></div>'
+    +'<div class="fg"><label class="fl">Tema do app</label>'
+    +'<button class="btn bgh" onclick="toggleTheme()" style="width:100%;margin-top:4px">'+(DARK_MODE?'☀️ Mudar para Claro':'🌙 Mudar para Escuro')+'</button></div>'
+    +'</div>'
+    +'<button class="btn bp sm" onclick="saveProfile()">💾 Salvar Perfil</button>'
+    +'</div></div>'
+
+    // Change password
+    +'<div class="card"><div class="ch"><h3>🔑 Alterar Senha</h3></div><div class="cb">'
+    +'<div class="fg"><label class="fl">Nova Senha</label>'
+    +'<input type="password" id="NP1" placeholder="Nova senha" autocomplete="new-password"></div>'
+    +'<div class="fg"><label class="fl">Confirmar Senha</label>'
+    +'<input type="password" id="NP2" placeholder="Confirmar" autocomplete="new-password"></div>'
+    +'<button class="btn bp sm" onclick="changePass()">Salvar Nova Senha</button>'
+    +'</div></div></div>';
+  G('CONT').innerHTML=h;
+}
+function saveProfile(){
+  var col=G('PROFCOLOR');
+  var doc=ST.docs.find(function(d){return d.id===CU.id;});
+  if(doc&&col){doc.color=col.value;doc.ini=mkIni(doc.name);CU.color=col.value;}
+  save('docs').then(function(){
+    addLog('Perfil atualizado: '+CU.name);
+    showToast('✅ Perfil salvo!','ok');
+    buildSB(); // refresh sidebar avatar
+  });
+}
 
 /* ── START ── */
 G('LBTN').onclick=doLogin;
