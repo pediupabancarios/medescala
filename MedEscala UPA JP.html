@@ -252,7 +252,40 @@ textarea{resize:vertical;min-height:65px;line-height:1.5}
 /* Calendar pills with photos */
 .cpill-photo{display:flex;align-items:center;gap:3px;font-size:9px;padding:2px 4px;border-radius:4px;margin-bottom:2px}
 .cpill-photo img{width:14px;height:14px;border-radius:50%;object-fit:cover;flex-shrink:0}
+
+/* ── CHARTS ── */
+.chart-bar-wrap{display:flex;align-items:flex-end;gap:4px;height:80px;padding:0 4px}
+.chart-bar{flex:1;border-radius:4px 4px 0 0;min-width:8px;transition:height .4s;position:relative;cursor:pointer}
+.chart-bar:hover::after{content:attr(data-val);position:absolute;top:-22px;left:50%;transform:translateX(-50%);background:var(--sf3);color:var(--tx);font-size:10px;padding:2px 5px;border-radius:4px;white-space:nowrap;font-family:'DM Mono',monospace}
+.chart-label{font-size:9px;color:var(--tx3);text-align:center;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat-big{font-family:'DM Mono',monospace;font-size:32px;font-weight:700;line-height:1}
 </style>
+
+<!-- PWA Manifest with UPA Icon -->
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA1MTIgNTEyJz4KICA8cmVjdCB3aWR0aD0nNTEyJyBoZWlnaHQ9JzUxMicgcng9JzEwMCcgZmlsbD0nJTIzMDgzMjZlJy8+CiAgPHJlY3QgeD0nMjIwJyB5PSc4MCcgd2lkdGg9JzcyJyBoZWlnaHQ9JzM1Micgcng9JzEwJyBmaWxsPSd3aGl0ZScvPgogIDxyZWN0IHg9JzgwJyB5PScyMjAnIHdpZHRoPSczNTInIGhlaWdodD0nNzInIHJ4PScxMCcgZmlsbD0nd2hpdGUnLz4KICA8Y2lyY2xlIGN4PScyNTYnIGN5PScyNTYnIHI9JzYwJyBmaWxsPSdub25lJyBzdHJva2U9JyUyMzJiOGZlZicgc3Ryb2tlLXdpZHRoPSc4JyBvcGFjaXR5PScwLjQnLz4KICA8dGV4dCB4PScyNTYnIHk9JzQ3MCcgdGV4dC1hbmNob3I9J21pZGRsZScgZm9udC1mYW1pbHk9J0FyaWFsLHNhbnMtc2VyaWYnIGZvbnQtc2l6ZT0nNDQnIGZvbnQtd2VpZ2h0PSdib2xkJyBmaWxsPSclMjMwMGM5YTcnPlVQQTwvdGV4dD4KPC9zdmc+">
+<meta name="apple-mobile-web-app-title" content="MedEscala">
+<script>
+// Register PWA manifest dynamically
+var manifest = {
+  name: 'MedEscala UPA Pediatria JP',
+  short_name: 'MedEscala',
+  description: 'Sistema de Escala UPA Pediátrica João Pessoa',
+  start_url: window.location.href,
+  display: 'standalone',
+  background_color: '#07101f',
+  theme_color: '#08326e',
+  orientation: 'any',
+  icons: [
+    {src:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA1MTIgNTEyJz4KICA8cmVjdCB3aWR0aD0nNTEyJyBoZWlnaHQ9JzUxMicgcng9JzEwMCcgZmlsbD0nJTIzMDgzMjZlJy8+CiAgPHJlY3QgeD0nMjIwJyB5PSc4MCcgd2lkdGg9JzcyJyBoZWlnaHQ9JzM1Micgcng9JzEwJyBmaWxsPSd3aGl0ZScvPgogIDxyZWN0IHg9JzgwJyB5PScyMjAnIHdpZHRoPSczNTInIGhlaWdodD0nNzInIHJ4PScxMCcgZmlsbD0nd2hpdGUnLz4KICA8Y2lyY2xlIGN4PScyNTYnIGN5PScyNTYnIHI9JzYwJyBmaWxsPSdub25lJyBzdHJva2U9JyUyMzJiOGZlZicgc3Ryb2tlLXdpZHRoPSc4JyBvcGFjaXR5PScwLjQnLz4KICA8dGV4dCB4PScyNTYnIHk9JzQ3MCcgdGV4dC1hbmNob3I9J21pZGRsZScgZm9udC1mYW1pbHk9J0FyaWFsLHNhbnMtc2VyaWYnIGZvbnQtc2l6ZT0nNDQnIGZvbnQtd2VpZ2h0PSdib2xkJyBmaWxsPSclMjMwMGM5YTcnPlVQQTwvdGV4dD4KPC9zdmc+',sizes:'192x192',type:'image/svg+xml'},
+    {src:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA1MTIgNTEyJz4KICA8cmVjdCB3aWR0aD0nNTEyJyBoZWlnaHQ9JzUxMicgcng9JzEwMCcgZmlsbD0nJTIzMDgzMjZlJy8+CiAgPHJlY3QgeD0nMjIwJyB5PSc4MCcgd2lkdGg9JzcyJyBoZWlnaHQ9JzM1Micgcng9JzEwJyBmaWxsPSd3aGl0ZScvPgogIDxyZWN0IHg9JzgwJyB5PScyMjAnIHdpZHRoPSczNTInIGhlaWdodD0nNzInIHJ4PScxMCcgZmlsbD0nd2hpdGUnLz4KICA8Y2lyY2xlIGN4PScyNTYnIGN5PScyNTYnIHI9JzYwJyBmaWxsPSdub25lJyBzdHJva2U9JyUyMzJiOGZlZicgc3Ryb2tlLXdpZHRoPSc4JyBvcGFjaXR5PScwLjQnLz4KICA8dGV4dCB4PScyNTYnIHk9JzQ3MCcgdGV4dC1hbmNob3I9J21pZGRsZScgZm9udC1mYW1pbHk9J0FyaWFsLHNhbnMtc2VyaWYnIGZvbnQtc2l6ZT0nNDQnIGZvbnQtd2VpZ2h0PSdib2xkJyBmaWxsPSclMjMwMGM5YTcnPlVQQTwvdGV4dD4KPC9zdmc+',sizes:'512x512',type:'image/svg+xml'}
+  ]
+};
+var blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+var url = URL.createObjectURL(blob);
+var link = document.createElement('link');
+link.rel='manifest'; link.href=url;
+document.head.appendChild(link);
+</script>
 </head>
 <body>
 
@@ -363,10 +396,20 @@ textarea{resize:vertical;min-height:65px;line-height:1.5}
         <span class="tbt" id="TBT">Dashboard</span>
       </div>
       <div class="tb-r">
+        <button class="notif-btn" onclick="toggleSearch()" title="Buscar">🔍</button>
         <div class="active-badge" id="ACTBADGE"><span class="blink">●</span>&nbsp;Ativo</div>
         <button class="notif-btn" onclick="toggleNP()">🔔<span id="NCNT"></span></button>
         <button class="btn bgh xs" onclick="toggleTheme()" style="padding:4px 8px;font-size:14px" title="Alternar tema" id="THMBTN">🌙</button><span id="CLK">--:--:--</span>
       </div>
+    </div>
+    <!-- SEARCH PANEL -->
+    <div id="SEARCHPANEL" style="display:none;position:fixed;top:var(--th);left:0;right:0;background:var(--sf);border-bottom:1px solid var(--bd);z-index:200;box-shadow:0 4px 20px rgba(0,0,0,.4)">
+      <div style="padding:12px 16px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">🔍</span>
+        <input type="text" id="SEARCHINPUT" placeholder="Buscar médico, data, plantão..." style="flex:1;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 12px;color:var(--tx);font-size:14px;outline:none" oninput="doSearch()" autocapitalize="none">
+        <button class="btn bgh sm" onclick="closeSearch()">✕</button>
+      </div>
+      <div id="SEARCHRESULTS" style="max-height:50vh;overflow-y:auto"></div>
     </div>
     <div id="SYNCBAR">
       <div class="sdot loading" id="SDOT"></div>
@@ -943,8 +986,8 @@ function markAllRead(){ST.notifs.forEach(function(n){if(n.readBy.indexOf(CU.id)=
 
 /* ── NAV ── */
 function navItems(){
-  var b=[{id:'dashboard',ic:'📊',lb:'Dashboard'},{id:'calendar',ic:'📅',lb:'Escala Geral'},{id:'myshifts',ic:'🏥',lb:'Meu Plantão'},{id:'board',ic:'📢',lb:'Mural de Plantões'},{id:'exchanges',ic:'🔄',lb:'Trocas & Repassses'},{id:'avisos',ic:'📣',lb:'Avisos'},{id:'chat',ic:'💬',lb:'Chat'},{id:'horas',ic:'⏱️',lb:'Banco de Horas'},{id:'perfil',ic:'👤',lb:'Meu Perfil'},{id:'agora',ic:'🟢',lb:'Plantão Agora'},{id:'ocorrencias',ic:'🚨',lb:'Ocorrências'},{id:'importar',ic:'📥',lb:'Importar Plantões'}];
-  if(isG())b.push({id:'ms',ic:'📋',lb:'Gerenciar Plantões',sec:'Admin'},{id:'mm',ic:'🗓️',lb:'Meses'},{id:'md',ic:'👨‍⚕️',lb:'Plantonistas'},{id:'geo',ic:'📍',lb:'Localização UPA'},{id:'rep',ic:'📈',lb:'Relatórios'},{id:'lg',ic:'📝',lb:'Log'},{id:'avisos',ic:'📣',lb:'Avisos'},{id:'ocorrencias',ic:'🚨',lb:'Ocorrências'},{id:'importar',ic:'📥',lb:'Importar Plantões'});
+  var b=[{id:'dashboard',ic:'📊',lb:'Dashboard'},{id:'calendar',ic:'📅',lb:'Escala Geral'},{id:'myshifts',ic:'🏥',lb:'Meu Plantão'},{id:'board',ic:'📢',lb:'Mural de Plantões'},{id:'exchanges',ic:'🔄',lb:'Trocas & Repassses'},{id:'avisos',ic:'📣',lb:'Avisos'},{id:'chat',ic:'💬',lb:'Chat'},{id:'horas',ic:'⏱️',lb:'Banco de Horas'},{id:'perfil',ic:'👤',lb:'Meu Perfil'},{id:'agora',ic:'🟢',lb:'Plantão Agora'},{id:'ocorrencias',ic:'🚨',lb:'Ocorrências'},{id:'importar',ic:'📥',lb:'Importar Plantões'},{id:'passagens',ic:'📋',lb:'Passagens'}];
+  if(isG())b.push({id:'ms',ic:'📋',lb:'Gerenciar Plantões',sec:'Admin'},{id:'mm',ic:'🗓️',lb:'Meses'},{id:'md',ic:'👨‍⚕️',lb:'Plantonistas'},{id:'geo',ic:'📍',lb:'Localização UPA'},{id:'rep',ic:'📈',lb:'Relatórios'},{id:'lg',ic:'📝',lb:'Log'},{id:'avisos',ic:'📣',lb:'Avisos'},{id:'ocorrencias',ic:'🚨',lb:'Ocorrências'},{id:'importar',ic:'📥',lb:'Importar Plantões'},{id:'passagens',ic:'📋',lb:'Passagens'});
   return b;
 }
 function buildSB(){
@@ -972,7 +1015,7 @@ function goTo(pg){
   document.querySelectorAll('.bni').forEach(function(e){e.classList.remove('active');});
   var ni=G('NI-'+pg),bi=G('BNI-'+pg);if(ni)ni.classList.add('active');if(bi)bi.classList.add('active');
   var cont=G('CONT');if(cont)cont.innerHTML='';clearInterval(shiftT);
-  var pgs={dashboard:pgDash,calendar:pgCal,myshifts:pgMy,board:pgBoard,exchanges:pgExch,ms:pgMS,mm:pgMM,md:pgMD,rep:pgRep,lg:pgLG,geo:pgGeo,avisos:pgAvisos,chat:pgChat,horas:pgHoras,perfil:pgPerfil,agora:pgAgora,ocorrencias:pgOcorrencias,passagem:pgPassagem,importar:pgImport};
+  var pgs={dashboard:pgDash,calendar:pgCal,myshifts:pgMy,board:pgBoard,exchanges:pgExch,ms:pgMS,mm:pgMM,md:pgMD,rep:pgRep,lg:pgLG,geo:pgGeo,avisos:pgAvisos,chat:pgChat,horas:pgHoras,perfil:pgPerfil,agora:pgAgora,ocorrencias:pgOcorrencias,passagem:pgPassagem,importar:pgImport,docperfil:showDocProfile,passagens:pgPassagemHist};
   if(pgs[pg])pgs[pg]();
   closeSb();var np=G('NP');if(np)np.classList.remove('on');
 }
@@ -1019,7 +1062,53 @@ function pgDash(){
   if(!ups.length)h+='<p style="color:var(--tx2);text-align:center;padding:16px 0">Nenhum plantão próximo</p>';
   ups.forEach(function(s){h+='<div class="shi"><div style="font-size:20px">'+sIco(s.type)+'</div><div class="shi-i"><b>'+fD(s.date)+' · '+sTime(s.type)+'</b><small>'+s.sector+'</small></div><div class="shi-a">'+bS(s.type)+' '+bSt(s.status)+'</div></div>';});
   h+='</div></div>';
-  if(isG()){var aA=ST.shifts.filter(function(x){return x.status==='active';}).length,pP=ST.exchanges.filter(function(e){return e.status==='pending';}).length;h+='<div class="card"><div class="ch"><h3>⚙️ Painel do Gestor</h3></div><div class="cb"><div class="sg"><div class="sc cb"><div class="lb">Plantões</div><div class="vl">'+ST.shifts.length+'</div></div><div class="sc ct"><div class="lb">Ativos</div><div class="vl">'+aA+'</div></div><div class="sc cg"><div class="lb">Trocas Pend.</div><div class="vl">'+pP+'</div></div><div class="sc cp"><div class="lb">Médicos</div><div class="vl">'+ST.docs.length+'</div></div></div></div></div>';}
+  if(isG()){
+    var aA=ST.shifts.filter(function(x){return x.status==='active';}).length;
+    var pP=ST.exchanges.filter(function(e){return e.status==='pending';}).length;
+    var totalH=ST.shifts.filter(function(x){return x.status==='closed';}).length*12;
+    // Stats row
+    h+='<div class="card"><div class="ch"><h3>📊 Painel do Gestor</h3></div><div class="cb">'
+      +'<div class="sg"><div class="sc cb"><div class="lb">Plantões</div><div class="vl">'+ST.shifts.length+'</div></div>'
+      +'<div class="sc ct"><div class="lb">Ativos Agora</div><div class="vl">'+aA+'</div></div>'
+      +'<div class="sc cg"><div class="lb">Trocas Pend.</div><div class="vl">'+pP+'</div></div>'
+      +'<div class="sc cp"><div class="lb">Médicos</div><div class="vl">'+ST.docs.length+'</div></div></div>';
+    // Monthly chart
+    var byMonth={};
+    ST.shifts.forEach(function(s){var m=s.date.slice(0,7);if(!byMonth[m])byMonth[m]=0;byMonth[m]++;});
+    var months=Object.keys(byMonth).sort().slice(-6);
+    var maxVal=Math.max.apply(null,months.map(function(m){return byMonth[m]||0;}))||1;
+    if(months.length>0){
+      h+='<p style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px">📈 Plantões por Mês</p>'
+        +'<div class="chart-bar-wrap">';
+      months.forEach(function(m){
+        var val=byMonth[m]||0;
+        var pct=Math.round(val/maxVal*100);
+        var monthName=new Date(m+'-01').toLocaleDateString('pt-BR',{month:'short',year:'2-digit'});
+        h+='<div style="flex:1;display:flex;flex-direction:column;align-items:center">'
+          +'<div class="chart-bar" style="height:'+pct+'%;background:linear-gradient(180deg,var(--bl),var(--bl2));width:100%;min-height:4px" data-val="'+val+'"></div>'
+          +'<div class="chart-label">'+monthName+'</div></div>';
+      });
+      h+='</div>';
+    }
+    // Top 5 doctors
+    var docRank=ST.docs.map(function(d){return{d:d,n:ST.shifts.filter(function(s){return s.docId===d.id;}).length};})
+      .filter(function(x){return x.n>0;}).sort(function(a,b){return b.n-a.n;}).slice(0,5);
+    if(docRank.length){
+      var mx=docRank[0].n||1;
+      h+='<p style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px">🏆 Top Plantonistas</p>';
+      docRank.forEach(function(x,i){
+        var medals=['🥇','🥈','🥉','4.','5.'];
+        h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;cursor:pointer" onclick="showDocProfile(\'+x.d.id+\')">'
+          +'<span style="font-size:14px;width:20px">'+medals[i]+'</span>'
+          +avH(x.d,26)
+          +'<span style="font-size:12px;flex:1">'+x.d.name.replace(/^(Dr\.|Dra\.)\s*/i,'').split(' ').slice(0,2).join(' ')+'</span>'
+          +'<div style="width:70px"><div style="background:var(--bd);border-radius:3px;height:4px"><div style="background:'+(i<3?'var(--gd)':'var(--bl)')+';height:4px;border-radius:3px;width:'+Math.round(x.n/mx*100)+'%"></div></div></div>'
+          +'<span style="font-size:11px;color:var(--tx2);font-family:\'DM Mono\',monospace">'+x.n+'</span>'
+          +'</div>';
+      });
+    }
+    h+='</div></div>';
+  }
   h+='</div>';G('CONT').innerHTML=h;
   if(active){clearInterval(shiftT);shiftT=setInterval(function(){var e=G('TMR1');if(e)e.textContent=elapsed(active.startedAt);else clearInterval(shiftT);},1000);}
 }
@@ -1323,7 +1412,7 @@ function doRmMonth(m){if(!confirm('Remover este mês?'))return;ST.months=ST.mont
 function pgMD(){
   if(!isG())return;
   var h='<div class="page"><div class="ph"><h2>👨‍⚕️ Plantonistas</h2><p>'+ST.docs.length+' médicos</p></div><div style="margin-bottom:14px"><button class="btn bp sm" onclick="modalAddDoc()">+ Cadastrar Médico</button></div><div class="dcg">';
-  ST.docs.forEach(function(d){h+='<div class="dcc">'+avH(d,42)+'<div class="dci" style="flex:1;min-width:0"><b>'+d.name.replace(/^(Dr\.|Dra\.)\s*/i,'')+'</b><small>'+(d.spec||'Pediatria')+'</small><div class="crm-txt">CRM: '+d.crm+'/PB</div><div class="crm-txt">Login: '+d.login+'</div><div class="crm-txt">Senha: '+d.crm+'</div>'+(d.role==='gestor'?'<span class="bdg gestor" style="margin-top:5px">👑 Gestor</span>':'')+(d.obs?'<div style="margin-top:4px"><span class="bdg lic">🏥 '+d.obs+'</span></div>':'')+'<div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap"><button class="btn bgh xs" onclick="modalEditDoc(\''+d.id+'\')">✏️ Editar</button>'+(d.id!=='doc_rc'?'<button class="btn bgh xs" style="color:var(--rs)" onclick="delDoc(\''+d.id+'\')">🗑</button>':'')+'</div></div></div>';});
+  ST.docs.forEach(function(d){h+='<div class="dcc" onclick="showDocProfile(\''+d.id+'\')" style="cursor:pointer">'+avH(d,42)+'<div class="dci" style="flex:1;min-width:0"><b>'+d.name.replace(/^(Dr\.|Dra\.)\s*/i,'')+'</b><small>'+(d.spec||'Pediatria')+'</small><div class="crm-txt">CRM: '+d.crm+'/PB</div><div class="crm-txt">Login: '+d.login+'</div><div class="crm-txt">Senha: '+d.crm+'</div>'+(d.role==='gestor'?'<span class="bdg gestor" style="margin-top:5px">👑 Gestor</span>':'')+(d.obs?'<div style="margin-top:4px"><span class="bdg lic">🏥 '+d.obs+'</span></div>':'')+'<div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap"><button class="btn bgh xs" onclick="modalEditDoc(\''+d.id+'\')">✏️ Editar</button>'+(d.id!=='doc_rc'?'<button class="btn bgh xs" style="color:var(--rs)" onclick="delDoc(\''+d.id+'\')">🗑</button>':'')+'</div></div></div>';});
   h+='</div></div>';G('CONT').innerHTML=h;
 }
 function modalAddDoc(){openModal('<div class="mh"><h3>+ Cadastrar Médico</h3><button class="mcl" onclick="closeModal()">✕</button></div><div class="mbd"><div class="fr"><div class="fg"><label class="fl">Nome Completo</label><input type="text" id="DN" placeholder="Dr(a). Nome Sobrenome"></div><div class="fg"><label class="fl">CRM (números)</label><input type="text" id="DC" placeholder="12345" inputmode="numeric"></div></div><div class="fr"><div class="fg"><label class="fl">Matrícula</label><input type="text" id="DM" placeholder="102.345-6"></div><div class="fg"><label class="fl">Especialidade</label><input type="text" id="DE" value="Pediatria"></div></div><div class="fr"><div class="fg"><label class="fl">Login (sem espaço)</label><input type="text" id="DL" placeholder="nome.sobrenome" autocapitalize="none"></div><div class="fg"><label class="fl">Cor</label><input type="color" id="DCOLOR" value="#2b8fef"></div></div><div class="fg"><label class="fl">Observação (opcional)</label><input type="text" id="DOBS" placeholder="Ex: Licença Maternidade"></div></div><div class="mft"><button class="btn bgh sm" onclick="closeModal()">Cancelar</button><button class="btn bp sm" onclick="doAddDoc()">Cadastrar</button></div>');}
@@ -1851,7 +1940,16 @@ function doPassagem(id){
 /* PDF REPORT */
 function exportPDF(){
   var month=G('PDFMONTH')?G('PDFMONTH').value:'';
-  var shifts=month?ST.shifts.filter(function(s){return s.date.startsWith(month);}):ST.shifts;
+  var docFilter=G('PDFDOC')?G('PDFDOC').value:'';
+  var fromDate=G('REPFROM')?G('REPFROM').value:'';
+  var toDate=G('REPTO')?G('REPTO').value:'';
+  var shifts=ST.shifts.filter(function(s){
+    if(month&&!s.date.startsWith(month))return false;
+    if(docFilter&&s.docId!==docFilter)return false;
+    if(fromDate&&s.date<fromDate)return false;
+    if(toDate&&s.date>toDate)return false;
+    return true;
+  });
   shifts=shifts.slice().sort(function(a,b){return a.date.localeCompare(b.date);});
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8">'
     +'<style>body{font-family:Arial,sans-serif;font-size:12px;margin:20px}'
@@ -2025,6 +2123,182 @@ function importMass(){
     +'✅ <b>'+added+' plantões adicionados</b>'+(skipped?' ('+skipped+' já existiam)':'')+'</div>';
   if(res)res.innerHTML=msg;
   if(added>0)showToast('✅ '+added+' plantões adicionados!','ok');
+}
+
+
+/* ══════════════════════════════════════════════
+   BUSCA GLOBAL
+══════════════════════════════════════════════ */
+var searchVisible = false;
+
+function toggleSearch(){
+  searchVisible = !searchVisible;
+  var panel = document.getElementById('SEARCHPANEL');
+  if(panel){
+    panel.style.display = searchVisible ? 'block' : 'none';
+    if(searchVisible){ var inp=document.getElementById('SEARCHINPUT'); if(inp)inp.focus(); }
+  }
+}
+
+function doSearch(){
+  var inp = document.getElementById('SEARCHINPUT');
+  if(!inp||!inp.value.trim())return;
+  var q = inp.value.trim().toLowerCase();
+  var results = [];
+
+  // Search shifts
+  ST.shifts.forEach(function(s){
+    var doc=dBy(s.docId);
+    var docName=(doc?doc.name:'').toLowerCase();
+    var dateStr=fD(s.date).toLowerCase();
+    if(docName.indexOf(q)>-1||dateStr.indexOf(q)>-1||s.date.indexOf(q)>-1){
+      results.push({type:'shift',data:s,doc:doc,label:fD(s.date)+' · '+sLbl(s.type)+(doc?' · '+doc.name.replace(/^(Dr\.|Dra\.)\s*/i,''):'')});
+    }
+  });
+
+  // Search doctors
+  ST.docs.forEach(function(d){
+    if(d.name.toLowerCase().indexOf(q)>-1||d.crm.indexOf(q)>-1||d.login.toLowerCase().indexOf(q)>-1){
+      var myShifts=ST.shifts.filter(function(s){return s.docId===d.id;});
+      results.push({type:'doc',data:d,label:d.name+' — CRM '+d.crm+' ('+myShifts.length+' plantões)'});
+    }
+  });
+
+  // Search exchanges
+  ST.exchanges.forEach(function(e){
+    var fDoc=dBy(e.fromDocId), tDoc=dBy(e.toDocId);
+    var names=((fDoc?fDoc.name:'')+' '+(tDoc?tDoc.name:'')).toLowerCase();
+    if(names.indexOf(q)>-1||(e.reason&&e.reason.toLowerCase().indexOf(q)>-1)){
+      results.push({type:'exch',data:e,label:(e.type==='passover'?'Repasse':'Troca')+': '+(fDoc?fDoc.name.replace(/^(Dr\.|Dra\.)\s*/i,''):'')+(tDoc?' ↔ '+tDoc.name.replace(/^(Dr\.|Dra\.)\s*/i,''):'')});
+    }
+  });
+
+  var box = document.getElementById('SEARCHRESULTS');
+  if(!box)return;
+
+  if(!results.length){
+    box.innerHTML='<p style="color:var(--tx2);padding:16px;text-align:center">Nenhum resultado para "'+q+'"</p>';
+    return;
+  }
+
+  var h='<div style="padding:8px 0"><p style="font-size:11px;color:var(--tx2);padding:0 14px 8px">'+results.length+' resultado(s)</p>';
+  results.slice(0,20).forEach(function(r){
+    var icon = r.type==='shift'?'📅':r.type==='doc'?'👤':'🔄';
+    var action = '';
+    if(r.type==='shift') action='onclick="closeSearch();calMonth=new Date(r.data.date.slice(0,7)+\'-01\');goTo(\'calendar\')"';
+    if(r.type==='doc') action='onclick="closeSearch();showDocProfile(\'+r.data.id+\')"';
+    if(r.type==='exch') action='onclick="closeSearch();goTo(\'exchanges\')"';
+    h+='<div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px" onclick="handleSearchClick('+ri+')">'
+      +'<span style="font-size:18px;flex-shrink:0">'+icon+'</span>'
+      +'<span style="font-size:13px">'+r.label+'</span>'
+      +'</div>';
+  });
+  h+='</div>';
+  box.innerHTML=h;
+}
+
+function closeSearch(){
+  searchVisible=false;
+  var panel=document.getElementById('SEARCHPANEL');
+  if(panel)panel.style.display='none';
+}
+
+
+/* ══════════════════════════════════════════════
+   FICHA DO MÉDICO
+══════════════════════════════════════════════ */
+function showDocProfile(docId){
+  var doc=dBy(docId);
+  if(!doc){showToast('Médico não encontrado','err');return;}
+  var myShifts=ST.shifts.filter(function(s){return s.docId===docId;});
+  var closed=myShifts.filter(function(s){return s.status==='closed';});
+  var upcoming=myShifts.filter(function(s){return s.date>=tdStr()&&s.status==='open';});
+  var exchanges=ST.exchanges.filter(function(e){return e.fromDocId===docId||e.toDocId===docId;});
+
+  var h='<div class="mh"><h3>👤 Ficha do Médico</h3><button class="mcl" onclick="closeModal()">✕</button></div>'
+    +'<div class="mbd">'
+    // Header
+    +'<div style="text-align:center;padding:16px 0 20px">'
+    +(doc.photo?'<div style="width:80px;height:80px;border-radius:50%;overflow:hidden;margin:0 auto 12px;border:3px solid '+(doc.color||'var(--bl)')+'"><img src="'+doc.photo+'" style="width:100%;height:100%;object-fit:cover"></div>':'<div class="av" style="width:80px;height:80px;font-size:28px;background:'+h2r(doc.color||'#2b8fef',.2)+';color:'+(doc.color||'#2b8fef')+';margin:0 auto 12px">'+doc.ini+'</div>')
+    +'<h3 style="font-family:\'Fraunces\',serif;font-size:17px;font-weight:700">'+doc.name+'</h3>'
+    +'<p style="color:var(--tx2);font-size:12.5px;margin-top:4px">'+(doc.spec||'Pediatria')+' · CRM '+doc.crm+'/PB</p>'
+    +'<p style="color:var(--tx2);font-size:12px;margin-top:2px">Matrícula: '+(doc.mat||'—')+'</p>'
+    +(doc.role==='gestor'?'<span class="bdg gestor" style="margin-top:8px">👑 Gestor / Coordenador</span>':'')
+    +(doc.obs?'<div style="margin-top:6px"><span class="bdg lic">🏥 '+doc.obs+'</span></div>':'')
+    +'</div>'
+    // Stats
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px">'
+    +'<div class="sc cb"><div class="lb">Plantões</div><div class="vl">'+myShifts.length+'</div></div>'
+    +'<div class="sc cgn"><div class="lb">Concluídos</div><div class="vl">'+closed.length+'</div></div>'
+    +'<div class="sc ct"><div class="lb">Horas</div><div class="vl">'+(closed.length*12)+'h</div></div>'
+    +'</div>'
+    // Next shifts
+    +'<h4 style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--tx2)">📅 Próximos Plantões ('+upcoming.length+')</h4>';
+
+  if(!upcoming.length){h+='<p style="color:var(--tx2);font-size:13px;margin-bottom:16px">Nenhum plantão agendado</p>';}
+  upcoming.slice(0,5).forEach(function(s){
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--sf2);border-radius:8px;margin-bottom:6px">'
+      +'<span>'+sIco(s.type)+'</span>'
+      +'<span style="flex:1;font-size:13px">'+fD(s.date)+' · '+sTime(s.type)+'</span>'
+      +bS(s.type)+'</div>';
+  });
+
+  // Exchanges history
+  if(exchanges.length){
+    h+='<h4 style="font-size:13px;font-weight:600;margin:14px 0 10px;color:var(--tx2)">🔄 Trocas & Repassses ('+exchanges.length+')</h4>';
+    exchanges.slice(0,5).forEach(function(e){
+      var fS=ST.shifts.find(function(s){return s.id===e.fromShiftId;});
+      h+='<div style="font-size:12px;color:var(--tx2);padding:6px 0;border-bottom:1px solid var(--bd)">'
+        +(e.type==='passover'?'📤 Repasse':'🔄 Troca')+' — '
+        +(fS?fD(fS.date)+' '+sLbl(fS.type):'')
+        +' — '+bEx(e.status)+'</div>';
+    });
+  }
+  h+='</div>';
+
+  openModal(h);
+}
+
+
+function pgPassagemHist(){
+  var shifts_with_pass=ST.shifts.filter(function(s){return s.passagem&&Object.keys(s.passagem).some(function(k){return s.passagem[k];});});
+  var h='<div class="page"><div class="ph"><h2>📋 Histórico de Passagens</h2><p>Registros de encerramento de plantões</p></div>';
+  if(!shifts_with_pass.length){
+    h+='<div class="card"><div class="cb" style="text-align:center;padding:32px"><div style="font-size:40px;margin-bottom:12px">📭</div><p style="color:var(--tx2)">Nenhuma passagem registrada ainda</p></div></div>';
+  } else {
+    shifts_with_pass.slice().reverse().forEach(function(s){
+      var doc=dBy(s.docId);
+      var p=s.passagem;
+      h+='<div class="card" style="margin-bottom:12px"><div class="ch">'
+        +(doc?avH(doc,28):'')
+        +'<div style="flex:1"><h3>'+fD(s.date)+' · '+sLbl(s.type)+'</h3>'
+        +'<small style="color:var(--tx2)">'+(doc?doc.name:'—')+(s.closedAt?' · '+fT(s.closedAt):'')+'</small></div></div>'
+        +'<div class="cb">';
+      if(p.pacientes)h+='<div style="margin-bottom:10px"><b style="font-size:11px;color:var(--tx2);display:block;margin-bottom:3px">👥 PACIENTES</b><p style="font-size:13px">'+p.pacientes+'</p></div>';
+      if(p.criticos)h+='<div style="margin-bottom:10px"><b style="font-size:11px;color:var(--rs);display:block;margin-bottom:3px">🚨 CRÍTICOS / OBSERVAÇÃO</b><p style="font-size:13px">'+p.criticos+'</p></div>';
+      if(p.intercorrencias)h+='<div style="margin-bottom:10px"><b style="font-size:11px;color:var(--gd);display:block;margin-bottom:3px">⚡ INTERCORRÊNCIAS</b><p style="font-size:13px">'+p.intercorrencias+'</p></div>';
+      if(p.pendencias)h+='<div style="margin-bottom:10px"><b style="font-size:11px;color:var(--or);display:block;margin-bottom:3px">⏳ PENDÊNCIAS</b><p style="font-size:13px">'+p.pendencias+'</p></div>';
+      if(p.medicacoes)h+='<div style="margin-bottom:10px"><b style="font-size:11px;color:var(--tl);display:block;margin-bottom:3px">💊 MEDICAÇÕES EM ANDAMENTO</b><p style="font-size:13px">'+p.medicacoes+'</p></div>';
+      h+='</div></div>';
+    });
+  }
+  h+='</div>';
+  G('CONT').innerHTML=h;
+}
+
+
+function handleSearchClick(idx){
+  if(!window._srResults||!window._srResults[idx])return;
+  var r = window._srResults[idx];
+  closeSearch();
+  if(r.type==='shift'){
+    calMonth=new Date(r.data.date.slice(0,7)+'-01');
+    goTo('calendar');
+  } else if(r.type==='doc'){
+    showDocProfile(r.data.id);
+  } else {
+    goTo('exchanges');
+  }
 }
 
 /* ── START ── */
