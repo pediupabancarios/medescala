@@ -541,6 +541,8 @@ function registerServiceWorker(){
 </div>
 
 <script>
+function avH(doc,sz){return avHtml(doc,sz);}
+
 /* ════════════════════════════════════════════════════
    MEDESCALA v7 — Single Supabase table (key/value)
    Table: medescala_data  columns: key(text PK), value(text)
@@ -1279,10 +1281,7 @@ function removePhoto(){
 
 function boot(){
   initTheme();
-  registerSW();
   registerServiceWorker();
-  registerSW();
-  registerSW();
   try{var c=JSON.parse(localStorage.getItem(CFG_KEY)||'{}');if(c.url&&c.key){SURL=c.url;SKEY=c.key;}}catch(e){}
   if(!SURL||!SKEY){showSetup();return;}
   G('LS').classList.add('on');
