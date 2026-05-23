@@ -259,6 +259,21 @@ textarea{resize:vertical;min-height:65px;line-height:1.5}
 .chart-bar:hover::after{content:attr(data-val);position:absolute;top:-22px;left:50%;transform:translateX(-50%);background:var(--sf3);color:var(--tx);font-size:10px;padding:2px 5px;border-radius:4px;white-space:nowrap;font-family:'DM Mono',monospace}
 .chart-label{font-size:9px;color:var(--tx3);text-align:center;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stat-big{font-family:'DM Mono',monospace;font-size:32px;font-weight:700;line-height:1}
+
+/* ── DONUT CHART ── */
+.donut-wrap{position:relative;width:120px;height:120px;flex-shrink:0}
+.donut-wrap svg{transform:rotate(-90deg)}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'DM Mono',monospace}
+.donut-val{font-size:22px;font-weight:700;line-height:1}
+.donut-lbl{font-size:10px;color:var(--tx2);margin-top:2px}
+.donut-legend{display:flex;flex-direction:column;gap:7px;justify-content:center;padding:8px 0}
+.donut-leg-item{display:flex;align-items:center;gap:7px;font-size:12px}
+.donut-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* ── INSTALL GUIDE ── */
+.install-step{display:flex;align-items:flex-start;gap:12px;padding:12px;background:var(--sf2);border-radius:10px;margin-bottom:8px}
+.install-num{width:28px;height:28px;border-radius:50%;background:var(--bl);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.install-phone{font-size:40px;text-align:center;margin-bottom:6px}
 </style>
 
 <!-- PWA Manifest with UPA Icon -->
@@ -986,7 +1001,7 @@ function markAllRead(){ST.notifs.forEach(function(n){if(n.readBy.indexOf(CU.id)=
 
 /* ── NAV ── */
 function navItems(){
-  var b=[{id:'dashboard',ic:'📊',lb:'Dashboard'},{id:'calendar',ic:'📅',lb:'Escala Geral'},{id:'myshifts',ic:'🏥',lb:'Meu Plantão'},{id:'board',ic:'📢',lb:'Mural de Plantões'},{id:'exchanges',ic:'🔄',lb:'Trocas & Repassses'},{id:'avisos',ic:'📣',lb:'Avisos'},{id:'chat',ic:'💬',lb:'Chat'},{id:'horas',ic:'⏱️',lb:'Banco de Horas'},{id:'perfil',ic:'👤',lb:'Meu Perfil'},{id:'agora',ic:'🟢',lb:'Plantão Agora'},{id:'ocorrencias',ic:'🚨',lb:'Ocorrências'},{id:'importar',ic:'📥',lb:'Importar Plantões'},{id:'passagens',ic:'📋',lb:'Passagens'}];
+  var b=[{id:'dashboard',ic:'📊',lb:'Dashboard'},{id:'calendar',ic:'📅',lb:'Escala Geral'},{id:'myshifts',ic:'🏥',lb:'Meu Plantão'},{id:'board',ic:'📢',lb:'Mural de Plantões'},{id:'exchanges',ic:'🔄',lb:'Trocas & Repassses'},{id:'avisos',ic:'📣',lb:'Avisos'},{id:'chat',ic:'💬',lb:'Chat'},{id:'horas',ic:'⏱️',lb:'Banco de Horas'},{id:'perfil',ic:'👤',lb:'Meu Perfil'},{id:'instalar',ic:'📲',lb:'Instalar App'},{id:'agora',ic:'🟢',lb:'Plantão Agora'},{id:'ocorrencias',ic:'🚨',lb:'Ocorrências'},{id:'importar',ic:'📥',lb:'Importar Plantões'},{id:'passagens',ic:'📋',lb:'Passagens'}];
   if(isG())b.push({id:'ms',ic:'📋',lb:'Gerenciar Plantões',sec:'Admin'},{id:'mm',ic:'🗓️',lb:'Meses'},{id:'md',ic:'👨‍⚕️',lb:'Plantonistas'},{id:'geo',ic:'📍',lb:'Localização UPA'},{id:'rep',ic:'📈',lb:'Relatórios'},{id:'lg',ic:'📝',lb:'Log'},{id:'avisos',ic:'📣',lb:'Avisos'},{id:'ocorrencias',ic:'🚨',lb:'Ocorrências'},{id:'importar',ic:'📥',lb:'Importar Plantões'},{id:'passagens',ic:'📋',lb:'Passagens'});
   return b;
 }
@@ -1015,7 +1030,7 @@ function goTo(pg){
   document.querySelectorAll('.bni').forEach(function(e){e.classList.remove('active');});
   var ni=G('NI-'+pg),bi=G('BNI-'+pg);if(ni)ni.classList.add('active');if(bi)bi.classList.add('active');
   var cont=G('CONT');if(cont)cont.innerHTML='';clearInterval(shiftT);
-  var pgs={dashboard:pgDash,calendar:pgCal,myshifts:pgMy,board:pgBoard,exchanges:pgExch,ms:pgMS,mm:pgMM,md:pgMD,rep:pgRep,lg:pgLG,geo:pgGeo,avisos:pgAvisos,chat:pgChat,horas:pgHoras,perfil:pgPerfil,agora:pgAgora,ocorrencias:pgOcorrencias,passagem:pgPassagem,importar:pgImport,docperfil:showDocProfile,passagens:pgPassagemHist};
+  var pgs={dashboard:pgDash,calendar:pgCal,myshifts:pgMy,board:pgBoard,exchanges:pgExch,ms:pgMS,mm:pgMM,md:pgMD,rep:pgRep,lg:pgLG,geo:pgGeo,avisos:pgAvisos,chat:pgChat,horas:pgHoras,perfil:pgPerfil,agora:pgAgora,ocorrencias:pgOcorrencias,passagem:pgPassagem,importar:pgImport,docperfil:showDocProfile,passagens:pgPassagemHist,instalar:pgInstall};
   if(pgs[pg])pgs[pg]();
   closeSb();var np=G('NP');if(np)np.classList.remove('on');
 }
@@ -1067,7 +1082,22 @@ function pgDash(){
     var pP=ST.exchanges.filter(function(e){return e.status==='pending';}).length;
     var totalH=ST.shifts.filter(function(x){return x.status==='closed';}).length*12;
     // Stats row
+    var closedH=ST.shifts.filter(function(x){return x.status==='closed';}).length*12;
+    var totD=ST.shifts.filter(function(x){return x.type==='D';}).length;
+    var totN=ST.shifts.filter(function(x){return x.type==='N';}).length;
+    var totd=ST.shifts.filter(function(x){return x.type==='d';}).length;
+    var totn=ST.shifts.filter(function(x){return x.type==='n';}).length;
     h+='<div class="card"><div class="ch"><h3>📊 Painel do Gestor</h3></div><div class="cb">'
+      +'<div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px">'
+      +'<div style="flex:1;min-width:200px">'+buildDonut(totD,totN,totd,totn,120)+'</div>'
+      +'<div style="flex:1;min-width:180px">'
+      +'<p style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Resumo da Equipe</p>'
+      +'<div style="display:flex;flex-direction:column;gap:7px">'
+      +'<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--tx2)">Total plantões</span><b style="font-family:\'DM Mono\',monospace">'+ST.shifts.length+'</b></div>'
+      +'<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--tx2)">Horas equipe</span><b style="font-family:\'DM Mono\',monospace">'+closedH+'h</b></div>'
+      +'<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--tx2)">Médicos ativos</span><b style="font-family:\'DM Mono\',monospace">'+ST.docs.length+'</b></div>'
+      +'<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--tx2)">Ativos agora</span><b style="font-family:\'DM Mono\',monospace;color:var(--tl)">'+aA+'</b></div>'
+      +'</div></div></div>';
       +'<div class="sg"><div class="sc cb"><div class="lb">Plantões</div><div class="vl">'+ST.shifts.length+'</div></div>'
       +'<div class="sc ct"><div class="lb">Ativos Agora</div><div class="vl">'+aA+'</div></div>'
       +'<div class="sc cg"><div class="lb">Trocas Pend.</div><div class="vl">'+pP+'</div></div>'
@@ -1118,7 +1148,7 @@ function pgCal(){
   var fd=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate(),td=tdStr();
   var mS=ST.shifts.filter(function(s){return s.date.startsWith(mStr);}),byDay={};
   mS.forEach(function(s){var dd=+s.date.split('-')[2];if(!byDay[dd])byDay[dd]=[];byDay[dd].push(s);});
-  var h='<div class="page"><div class="ph"><h2>📅 Escala Geral</h2><p>Todos os plantões de todos os médicos</p></div><div class="card"><div class="cb"><div class="cal-nav"><button class="btn bgh sm" onclick="calPrev()">← Anterior</button><h3>'+mName+'</h3><button class="btn bgh sm" onclick="calNext()">Próximo →</button></div><div class="cal-grid">'+['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(function(d){return'<div class="cdh">'+d+'</div>';}).join('');
+  var h='<div class="page"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><div><h2>📅 Escala Geral</h2><p style="margin:0">Todos os plantões de todos os médicos</p></div><button class="btn bgh sm" onclick="shareSchedule()">📤 Compartilhar</button></div><div class="card"><div class="cb"><div class="cal-nav"><button class="btn bgh sm" onclick="calPrev()">← Anterior</button><h3>'+mName+'</h3><button class="btn bgh sm" onclick="calNext()">Próximo →</button></div><div class="cal-grid">'+['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(function(d){return'<div class="cdh">'+d+'</div>';}).join('');
   for(var i=0;i<fd;i++)h+='<div class="cd emp"></div>';
   for(var day=1;day<=dim;day++){
     var dStr=mStr+'-'+p2(day),isT=dStr===td,ss=byDay[day]||[];
@@ -2302,6 +2332,201 @@ function handleSearchClick(idx){
 }
 
 function avH(doc,sz){return avHtml(doc,sz);}
+
+/* ══════════════════════════════════════════════
+   DONUT CHART — percentual por tipo de plantão
+══════════════════════════════════════════════ */
+function buildDonut(D, N, d, n, size){
+  size = size||120;
+  var total = D+N+d+n||1;
+  var r = size/2 - 12;
+  var cx = size/2, cy = size/2;
+  var circ = 2*Math.PI*r;
+  var segs = [
+    {v:D, color:'#e8a825', lbl:'Diurno'},
+    {v:N, color:'#2b8fef', lbl:'Noturno'},
+    {v:d, color:'#f59e0b', lbl:'Extra D'},
+    {v:n, color:'#60a5fa', lbl:'Extra N'}
+  ].filter(function(s){return s.v>0;});
+  
+  var svgParts = '';
+  var offset = 0;
+  segs.forEach(function(seg){
+    var pct = seg.v/total;
+    var dash = pct*circ;
+    var gap = circ-dash;
+    svgParts += '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'"'
+      +' fill="none" stroke="'+seg.color+'" stroke-width="20"'
+      +' stroke-dasharray="'+dash.toFixed(2)+' '+gap.toFixed(2)+'"'
+      +' stroke-dashoffset="'+(-offset*circ).toFixed(2)+'"'
+      +' opacity="0.9"/>';
+    offset += pct;
+  });
+  
+  return '<div style="display:flex;align-items:center;gap:16px">'
+    +'<div class="donut-wrap" style="width:'+size+'px;height:'+size+'px">'
+    +'<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'">'
+    +'<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--sf3)" stroke-width="20"/>'
+    +svgParts+'</svg>'
+    +'<div class="donut-center"><div class="donut-val">'+total+'</div><div class="donut-lbl">total</div></div>'
+    +'</div>'
+    +'<div class="donut-legend">'
+    +segs.map(function(s){
+      return '<div class="donut-leg-item">'
+        +'<div class="donut-leg-dot" style="background:'+s.color+'"></div>'
+        +'<span style="color:var(--tx2)">'+s.lbl+'</span>'
+        +'<span style="font-family:\'DM Mono\',monospace;font-weight:700;margin-left:auto">'+s.v+'</span>'
+        +'<span style="color:var(--tx3);font-size:11px;margin-left:4px">'
+        +Math.round(s.v/total*100)+'%</span>'
+        +'</div>';
+    }).join('')
+    +'</div></div>';
+}
+
+
+/* ══════════════════════════════════════════════
+   COMPARTILHAR ESCALA — WhatsApp / texto
+══════════════════════════════════════════════ */
+function shareSchedule(){
+  var month = G('CALMONTH') ? G('CALMONTH').value : calMonth.toISOString().slice(0,7);
+  var monthName = calMonth.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  var shifts = ST.shifts.filter(function(s){return s.date.startsWith(month);})
+    .sort(function(a,b){return a.date.localeCompare(b.date)||a.type.localeCompare(b.type);});
+
+  if(!shifts.length){showToast('Nenhum plantão neste mês','err');return;}
+
+  // Build text schedule
+  var text = '🏥 *MedEscala UPA Pediátrica JP*\n';
+  text += '📅 *Escala de '+monthName.charAt(0).toUpperCase()+monthName.slice(1)+'*\n';
+  text += '━━━━━━━━━━━━━━━━━━━━\n';
+
+  var currentDate = '';
+  shifts.forEach(function(s){
+    var doc = dBy(s.docId);
+    if(s.date !== currentDate){
+      currentDate = s.date;
+      var d = new Date(s.date+'T12:00:00');
+      var dayName = d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'});
+      text += '\n📆 *'+dayName+'*\n';
+    }
+    var ico = s.type==='D'||s.type==='d' ? '☀️' : '🌙';
+    var turno = s.type==='D'?'Diurno':s.type==='N'?'Noturno':s.type==='d'?'Extra D':'Extra N';
+    var docName = doc ? doc.name.replace(/^(Dr\.|Dra\.)\s*/i,'').split(' ').slice(0,2).join(' ') : '—';
+    text += ico+' '+turno+': *'+docName+'*\n';
+  });
+
+  text += '\n━━━━━━━━━━━━━━━━━━━━\n';
+  text += '🔗 '+window.location.href+'\n';
+  text += '_MedEscala · UPA Bancários JP_';
+
+  // Try native share
+  if(navigator.share){
+    navigator.share({
+      title: 'Escala UPA Pediátrica JP — '+monthName,
+      text: text
+    }).catch(function(){copyScheduleText(text);});
+  } else {
+    copyScheduleText(text);
+  }
+}
+
+function copyScheduleText(text){
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(function(){
+      showToast('✅ Escala copiada! Cole no WhatsApp.','ok');
+    }).catch(function(){showShareModal(text);});
+  } else {
+    showShareModal(text);
+  }
+}
+
+function showShareModal(text){
+  openModal('<div class="mh"><h3>📤 Compartilhar Escala</h3><button class="mcl" onclick="closeModal()">✕</button></div>'
+    +'<div class="mbd">'
+    +'<p style="font-size:13px;color:var(--tx2);margin-bottom:12px">Copie o texto abaixo e cole no WhatsApp:</p>'
+    +'<textarea style="width:100%;min-height:200px;font-size:11px;font-family:\'DM Mono\',monospace;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:10px;color:var(--tx)" readonly>'+text+'</textarea>'
+    +'<button class="btn bp sm" style="width:100%;margin-top:12px;justify-content:center" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.previousElementSibling.value);showToast(\'✅ Copiado!\',\'ok\')">📋 Copiar texto</button>'
+    +'</div>');
+}
+
+
+/* ══════════════════════════════════════════════
+   INSTALL GUIDE — visual step by step
+══════════════════════════════════════════════ */
+function pgInstall(){
+  var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isAndroid = /Android/i.test(navigator.userAgent);
+  var isSamsung = /SamsungBrowser/i.test(navigator.userAgent);
+
+  var h='<div class="page"><div class="ph"><h2>📱 Instalar no Celular</h2>'
+    +'<p>Adicione o MedEscala à tela inicial como um app</p></div>';
+
+  // Auto-detect device
+  if(isIOS){
+    h += buildInstallGuide('iPhone / iPad (Safari)', [
+      {icon:'🌐', text:'Abra este link no <b>Safari</b> (não no Chrome ou outro navegador)'},
+      {icon:'⬆️', text:'Toque no botão <b>Compartilhar</b> na barra inferior do Safari (quadrado com seta para cima)'},
+      {icon:'📜', text:'Role a lista para baixo e toque em <b>"Adicionar à Tela de Início"</b>'},
+      {icon:'✏️', text:'O nome já aparece como <b>MedEscala</b> — toque em <b>"Adicionar"</b> no canto superior direito'},
+      {icon:'✅', text:'Pronto! O ícone aparece na tela inicial. Abra como qualquer app!'}
+    ], '#2b8fef');
+  } else if(isSamsung){
+    h += buildInstallGuide('Samsung (Internet Browser)', [
+      {icon:'🌐', text:'Abra este link no <b>Samsung Internet</b>'},
+      {icon:'☰', text:'Toque nos <b>3 traços</b> (menu) no canto inferior direito'},
+      {icon:'➕', text:'Toque em <b>"Adicionar página a"</b>'},
+      {icon:'🏠', text:'Selecione <b>"Tela inicial"</b>'},
+      {icon:'✅', text:'Toque em <b>"Adicionar"</b> — pronto!'}
+    ], '#1428a0');
+  } else if(isAndroid){
+    h += buildInstallGuide('Android (Chrome)', [
+      {icon:'🌐', text:'Abra este link no <b>Chrome</b>'},
+      {icon:'⋮', text:'Toque nos <b>3 pontos</b> no canto superior direito'},
+      {icon:'📲', text:'Toque em <b>"Adicionar à tela inicial"</b>'},
+      {icon:'✅', text:'Toque em <b>"Adicionar"</b> — pronto!'}
+    ], '#34a853');
+  } else {
+    // Show all guides
+    h += buildInstallGuide('🍎 iPhone / iPad (Safari)', [
+      {icon:'🌐', text:'Abra no <b>Safari</b>'},
+      {icon:'⬆️', text:'Toque em <b>Compartilhar</b> ↑ na barra do Safari'},
+      {icon:'📜', text:'Role e toque em <b>"Adicionar à Tela de Início"</b>'},
+      {icon:'✅', text:'Toque em <b>"Adicionar"</b>'}
+    ], '#2b8fef');
+    h += buildInstallGuide('🤖 Android (Chrome)', [
+      {icon:'🌐', text:'Abra no <b>Chrome</b>'},
+      {icon:'⋮', text:'Toque nos <b>3 pontos</b> ⋮'},
+      {icon:'📲', text:'Toque em <b>"Adicionar à tela inicial"</b>'},
+      {icon:'✅', text:'Toque em <b>"Adicionar"</b>'}
+    ], '#34a853');
+  }
+
+  // QR code link
+  h += '<div class="card"><div class="ch"><h3>🔗 Link direto</h3></div><div class="cb">'
+    +'<p style="font-size:12px;color:var(--tx2);margin-bottom:10px">Envie este link para os colegas:</p>'
+    +'<div style="background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:12px;font-family:\'DM Mono\',monospace;font-size:11px;word-break:break-all;color:var(--tl)">'+window.location.href+'</div>'
+    +'<button class="btn bp sm" style="width:100%;margin-top:10px;justify-content:center" onclick="navigator.clipboard&&navigator.clipboard.writeText(window.location.href).then(function(){showToast(\'✅ Link copiado!\',\'ok\');})">📋 Copiar link</button>'
+    +'</div></div>';
+
+  h += '</div>';
+  G('CONT').innerHTML=h;
+}
+
+function buildInstallGuide(title, steps, color){
+  var h='<div class="card" style="border-left:3px solid '+color+';margin-bottom:12px">'
+    +'<div class="ch"><h3>'+title+'</h3></div><div class="cb">';
+  steps.forEach(function(step, i){
+    h+='<div class="install-step">'
+      +'<div class="install-num" style="background:'+color+'">'+(i+1)+'</div>'
+      +'<div>'
+      +'<div style="font-size:22px;margin-bottom:4px">'+step.icon+'</div>'
+      +'<p style="font-size:13px;line-height:1.6">'+step.text+'</p>'
+      +'</div></div>';
+  });
+  h+='</div></div>';
+  return h;
+}
+
 /* ── START ── */
 G('LBTN').onclick=doLogin;
 G('LIU').onkeydown=function(e){if(e.key==='Enter')G('LIP').focus();};
